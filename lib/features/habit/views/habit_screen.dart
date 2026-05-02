@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purewill/core/widgets/clean_bottom_navigation_bar.dart';
+import 'package:purewill/core/utils/indonesia_timezone.dart';
 import 'dart:ui';
 import 'package:purewill/features/habit/models/habit_model.dart';
 import 'package:purewill/features/habit/models/habit_log_model.dart';
@@ -92,8 +93,7 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromRGBO(176, 230, 216, 1),
-        elevation: 4,
+        // backgroundColor: const Color.fromRGBO(176, 230, 216, 1),
         shadowColor: Colors.black.withOpacity(0.2),
         title: const Text(
           'My Habits',
@@ -194,10 +194,7 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
                             ),
                             _buildStatCard(
                               'Active Habits',
-                              userHabits
-                                  .where((h) => h.isActive)
-                                  .length
-                                  .toString(),
+                              userHabits.where((h) => h.isActiveOn(nowInIndonesia())).length.toString(),
                               Icons.play_circle,
                               Colors.orange,
                             ),

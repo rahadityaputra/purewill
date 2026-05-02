@@ -4,9 +4,10 @@ import 'package:purewill/features/auth/services/biometric_service.dart';
 import 'package:purewill/features/auth/services/secure_storage_repository.dart';
 import 'package:purewill/features/auth/providers/auth_provider.dart';
 import 'package:purewill/features/user/providers/profile_provider.dart';
-// import 'package:purewill/ui/habit-tracker/provider/timezone_provider.dart';
-import 'package:purewill/features/user/views/edit_profile_screen.dart';
 import 'package:purewill/core/utils/indonesia_timezone.dart';
+import 'package:purewill/core/widgets/primary_action_button.dart';
+import 'package:purewill/features/user/providers/timezone_provider.dart';
+import 'package:purewill/features/user/views/edit_profile_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -211,6 +212,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   const SizedBox(height: 20),
                   _SectionCard(
+                    title: 'Bio',
+                    child: Text(
+                      user?.bio?.trim().isNotEmpty == true ? user!.bio! : '-',
+                      style: const TextStyle(height: 1.5),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _SectionCard(
                     title: 'Timezone',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,7 +392,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  FilledButton.icon(
+                  PrimaryActionButton(
                     onPressed:
                         state.isLogoutLoading || state.isLoading || user == null
                         ? null
@@ -400,38 +409,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               await _onRefresh(ref);
                             }
                           },
-                    icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Edit User'),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
+                    text: 'Edit User',
+                    leadingIcon: const Icon(Icons.edit_outlined),
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    width: double.infinity,
+                    height: 52,
+                    borderRadius: 16,
                   ),
                   const SizedBox(height: 12),
-                  OutlinedButton.icon(
+                  PrimaryActionButton(
                     onPressed: state.isLogoutLoading
                         ? null
                         : () => _showLogoutDialog(context, ref),
-                    icon: state.isLogoutLoading
+                    text: state.isLogoutLoading ? 'Logging out...' : 'Logout',
+                    leadingIcon: state.isLogoutLoading
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
                           )
-                        : const Icon(Icons.logout, color: Colors.red),
-                    label: Text(
-                      state.isLogoutLoading ? 'Logging out...' : 'Logout',
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.red),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
+                        : const Icon(Icons.logout),
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    width: double.infinity,
+                    height: 52,
+                    borderRadius: 16,
                   ),
                   if (state.errorMessage != null) ...[
                     const SizedBox(height: 16),

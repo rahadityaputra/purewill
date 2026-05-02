@@ -11,8 +11,10 @@ import 'package:purewill/features/habit/providers/habit_provider.dart';
 import 'package:purewill/features/habit/models/habit_model.dart';
 import 'package:purewill/features/auth/providers/auth_provider.dart';
 import 'package:purewill/features/habit/widgets/category_dropdown.dart';
+import 'package:purewill/core/widgets/primary_action_button.dart';
 import 'package:purewill/features/habit/widgets/save_button.dart';
 import 'package:purewill/core/utils/indonesia_timezone.dart';
+import 'package:purewill/core/widgets/dialogs/app_confirm_dialog.dart';
 
 class AddHabitScreen extends ConsumerStatefulWidget {
   const AddHabitScreen({super.key, this.defaultHabit});
@@ -32,6 +34,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
   final _customUnitController = TextEditingController();
   final _noteController = TextEditingController();
   final _locationNameController = TextEditingController();
+  final _valueController = TextEditingController();
 
   int? _selectedCategoryId;
   String _selectedFrequency = 'daily';
@@ -78,6 +81,9 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
       _targetValue = widget.defaultHabit!.targetValue ?? 30;
       _targetValueController.text = _targetValue.toString();
       _selectedFrequency = widget.defaultHabit!.frequency;
+      if (widget.defaultHabit!.value != null) {
+        _valueController.text = widget.defaultHabit!.value!.toString();
+      }
 
       if (widget.defaultHabit!.unit != null) {
         _selectedUnit = widget.defaultHabit!.unit!;
@@ -98,6 +104,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
     _customUnitController.dispose();
     _noteController.dispose();
     _locationNameController.dispose();
+    _valueController.dispose();
     super.dispose();
   }
 
@@ -108,24 +115,16 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
         if (mounted) {
           showDialog(
             context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Location permission'),
-              content: const Text(
-                'Location permission is required to lock habit location. Please grant permission in app settings.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Close'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    openAppSettings();
-                    Navigator.of(ctx).pop();
-                  },
-                  child: const Text('Open Settings'),
-                ),
-              ],
+            builder: (ctx) => AppConfirmDialog(
+              title: 'Location permission',
+              message:
+                  'Location permission is required to lock habit location. Please grant permission in app settings.',
+              cancelLabel: 'Close',
+              confirmLabel: 'Open Settings',
+              confirmColor: Colors.blue,
+              onConfirm: () {
+                openAppSettings();
+              },
             ),
           );
         }
@@ -231,7 +230,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                       children: [
                         Row(
                           children: [
-                            ElevatedButton(
+                            PrimaryActionButton(
                               onPressed: () async {
                                 try {
                                   final p =
@@ -250,7 +249,13 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                                   );
                                 }
                               },
-                              child: const Text('Use current location'),
+                              text: 'Use current location',
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -283,7 +288,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                         Row(
                           children: [
                             Expanded(
-                              child: ElevatedButton(
+                              child: PrimaryActionButton(
                                 onPressed: () {
                                   setState(() {
                                     _targetLat = tempLat;
@@ -292,7 +297,8 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                                   });
                                   Navigator.of(ctx).pop();
                                 },
-                                child: const Text('Save Location'),
+                                text: 'Save Location',
+                                width: double.infinity,
                               ),
                             ),
                           ],
@@ -311,6 +317,31 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
 
   Future<void> _saveHabit() async {
     if (_formKey.currentState!.validate()) {
+      if (_endDateEnabled && _endDate != null && _startDate != null) {
+        final startDate = DateTime(
+          _startDate!.year,
+          _startDate!.month,
+          _startDate!.day,
+        );
+        final endDate = DateTime(
+          _endDate!.year,
+          _endDate!.month,
+          _endDate!.day,
+        );
+
+        if (!endDate.isAfter(startDate)) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('End date must be after start date'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+      }
+
       final addHabitViewModel = ref.read(addHabitNotifierProvider.notifier);
       final addHabitState = ref.read(addHabitNotifierProvider);
 
@@ -341,6 +372,9 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
           endDate: _endDateEnabled ? _endDate : null,
           notes: _noteController.text,
           targetValue: _targetValue,
+          value: _valueController.text.isNotEmpty
+              ? double.tryParse(_valueController.text)
+              : null,
           isLocationLocked: _isLocationLocked,
           locationName: _locationNameController.text.isNotEmpty
               ? _locationNameController.text
@@ -832,14 +866,18 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                               const SizedBox(height: 8),
                               GestureDetector(
                                 onTap: () async {
+                                  final minEndDate =
+                                      (_startDate ?? nowInIndonesia()).add(
+                                        const Duration(days: 1),
+                                      );
                                   final DateTime? picked = await showDatePicker(
                                     context: context,
                                     initialDate:
-                                        _endDate ??
-                                        nowInIndonesia().add(
-                                          const Duration(days: 30),
-                                        ),
-                                    firstDate: _startDate ?? nowInIndonesia(),
+                                        _endDate != null &&
+                                            _endDate!.isAfter(minEndDate)
+                                        ? _endDate
+                                        : minEndDate,
+                                    firstDate: minEndDate,
                                     lastDate: DateTime(2030),
                                   );
                                   if (picked != null && mounted) {
@@ -974,12 +1012,17 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              ElevatedButton(
+                              PrimaryActionButton(
                                 onPressed: _showLocationPicker,
-                                child: Text(
-                                  _targetLat != null && _targetLong != null
-                                      ? 'Change Location'
-                                      : 'Pick Location on Map',
+                                text: _targetLat != null && _targetLong != null
+                                    ? 'Change Location'
+                                    : 'Pick Location on Map',
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -998,6 +1041,50 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                               ],
                             ],
                           ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Value Field (IDR)
+                    const Text(
+                      'Value (IDR) - Optional',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: TextFormField(
+                        controller: _valueController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'e.g. 50000',
+                          prefixText: 'Rp ',
+                          filled: true,
+                          fillColor: Colors.white.withValues(alpha: 0.95),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                         ),
                       ),
                     ),

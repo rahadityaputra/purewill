@@ -33,14 +33,22 @@ class AuthViewModel extends StateNotifier<AuthState> {
   final BiometricService _biometricService = BiometricService();
   final SecureStorageRepository _secureStorage = SecureStorageRepository();
 
-  AuthViewModel(this._repository) : super(AuthState());
+  AuthViewModel(this._repository)
+    : super(AuthState(status: AuthStatus.loading));
 
   Future<void> restoreSession({bool requireBiometric = false}) async {
+    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+
     try {
       final restoredUser = await _repository.restoreSession(
         requireBiometric: requireBiometric,
       );
       if (restoredUser == null) {
+        state = state.copyWith(
+          status: AuthStatus.initial,
+          errorMessage: null,
+          user: null,
+        );
         return;
       }
 

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:purewill/features/habit/models/habit_model.dart';
 import 'package:purewill/core/utils/indonesia_timezone.dart';
+import 'package:purewill/core/services/currency_conversion_service.dart';
 
-class HabitDetailExplanationWidget extends StatelessWidget {
+class HabitDetailExplanationWidget extends StatefulWidget {
   final HabitModel habit;
   final Color habitColor;
 
@@ -14,22 +15,29 @@ class HabitDetailExplanationWidget extends StatelessWidget {
   });
 
   @override
+  State<HabitDetailExplanationWidget> createState() =>
+      _HabitDetailExplanationWidgetState();
+}
+
+class _HabitDetailExplanationWidgetState
+    extends State<HabitDetailExplanationWidget> {
+  @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: habitColor.withOpacity(0.08),
+        color: widget.habitColor.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: habitColor.withOpacity(0.2), width: 1),
+        border: Border.all(color: widget.habitColor.withOpacity(0.2), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Notes / description
-          if (habit.notes != null && habit.notes!.isNotEmpty) ...[
+          if (widget.habit.notes != null && widget.habit.notes!.isNotEmpty) ...[
             const Text(
-              "Description",
+              "Notes",
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -39,7 +47,7 @@ class HabitDetailExplanationWidget extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              habit.notes!,
+              widget.habit.notes!,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
@@ -50,57 +58,78 @@ class HabitDetailExplanationWidget extends StatelessWidget {
             const SizedBox(height: 12),
           ],
 
-          // Frequency
           _buildDetailRow(
             label: "Frequency",
-            value: _getFrequencyLabel(habit.frequency),
-            color: habitColor,
+            value: _getFrequencyLabel(widget.habit.frequency),
+            color: widget.habitColor,
           ),
           const SizedBox(height: 8),
 
           // Target value and unit
-          if (habit.targetValue != null && habit.unit != null) ...[
+          if (widget.habit.targetValue != null &&
+              widget.habit.unit != null) ...[
             _buildDetailRow(
               label: "Target",
-              value: "${habit.targetValue} ${habit.unit}",
-              color: habitColor,
+              value: "${widget.habit.targetValue} ${widget.habit.unit}",
+              color: widget.habitColor,
+            ),
+            const SizedBox(height: 8),
+          ],
+
+          // Value section
+          if (widget.habit.value != null && widget.habit.value! > 0) ...[
+            _buildDetailRow(
+              label: "Value",
+              value: CurrencyConversionService.formatCurrency(
+                'IDR',
+                widget.habit.value!.toStringAsFixed(0),
+              ),
+              color: widget.habitColor,
+              icon: Icons.attach_money,
             ),
             const SizedBox(height: 8),
           ],
 
           // Location information
-          if (habit.isLocationLocked && habit.locationName != null) ...[
+          if (widget.habit.isLocationLocked &&
+              widget.habit.locationName != null) ...[
             _buildDetailRow(
               label: "Location",
-              value: habit.locationName!,
-              color: habitColor,
+              value: widget.habit.locationName!,
+              color: widget.habitColor,
               icon: Icons.location_on,
             ),
             const SizedBox(height: 8),
-            if (habit.radius != null)
+            if (widget.habit.radius != null)
               _buildDetailRow(
                 label: "Radius",
-                value: "${habit.radius} meter",
-                color: habitColor,
-                // icon: Icons.radius_outlined,
+                value: "${widget.habit.radius} meter",
+                color: widget.habitColor,
                 icon: Icons.radar_outlined,
               ),
             const SizedBox(height: 8),
           ],
 
-          // Start date
           _buildDetailRow(
             label: "Started",
-            value: _formatDate(habit.startDate),
-            color: habitColor,
+            value: _formatDate(widget.habit.startDate),
+            color: widget.habitColor,
             icon: Icons.calendar_today,
           ),
+
+          if (_shouldShowEndDate())
+            _buildDetailRow(
+              label: "End",
+              value: _formatDate(widget.habit.endDate!),
+              color: widget.habitColor,
+              icon: Icons.calendar_today,
+            ),
 
           const SizedBox(height: 8),
           _buildDetailRow(
             label: "Duration",
-            value: _calculateDaysRunning(habit.startDate),
-            color: habitColor,
+            value: _calculateDaysRunning(widget.habit.startDate),
+            color: widget.habitColor,
             icon: Icons.schedule,
           ),
         ],
@@ -182,5 +211,16 @@ class HabitDetailExplanationWidget extends StatelessWidget {
     final now = nowInIndonesia();
     final difference = now.difference(startDate).inDays + 1;
     return '$difference days';
+  }
+
+  bool _shouldShowEndDate() {
+    final endDate = widget.habit.endDate;
+    if (endDate == null) {
+      return false;
+    }
+
+    final normalizedStart = dateOnlyInIndonesia(widget.habit.startDate);
+    final normalizedEnd = dateOnlyInIndonesia(endDate);
+    return normalizedEnd.isAfter(normalizedStart);
   }
 }

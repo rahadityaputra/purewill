@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:purewill/core/theme/app_theme.dart';
 import 'package:purewill/features/habit/services/local_notification_service.dart';
 import 'package:purewill/features/habit/services/reminder_sync_service.dart';
 import 'package:purewill/features/auth/services/auth_wrapper.dart';
 import 'package:purewill/features/home/views/home_screen.dart';
 import 'package:purewill/features/auth/views/login_screen.dart';
 import 'package:purewill/features/auth/views/signup_screen.dart';
-import 'package:purewill/ui/habit-tracker/provider/timezone_provider.dart';
 import 'package:purewill/core/utils/indonesia_timezone.dart';
 
 Future<void> main() async {
@@ -45,7 +45,7 @@ Future<void> _initializeServices() async {
         _handleNotificationPayload(payload);
       },
     );
-    
+
     await LocalNotificationService.handleNotificationOnStartup();
     await _initializeReminderSyncService();
 
@@ -94,12 +94,7 @@ class MyApp extends ConsumerWidget {
     // ref.watch(timezoneProvider);
     return MaterialApp(
       title: 'PureWill',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        fontFamily: 'Inter',
-      ),
+      theme: AppTheme.light(),
       home: const AuthWrapper(),
       routes: {
         '/login': (context) => const LoginScreen(),

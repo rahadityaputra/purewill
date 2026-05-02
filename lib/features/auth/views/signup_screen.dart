@@ -5,6 +5,7 @@ import 'package:purewill/features/auth/providers/auth_provider.dart';
 import 'package:purewill/features/auth/views/login_screen.dart';
 import 'package:purewill/features/auth/view_models/auth_view_model.dart';
 import 'package:purewill/core/utils/indonesia_timezone.dart';
+import 'package:purewill/core/widgets/primary_action_button.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -477,42 +478,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                               const SizedBox(height: 24),
 
-                              // Register Button
                               SizedBox(
                                 width: double.infinity,
-                                child: ElevatedButton(
+                                child: PrimaryActionButton(
+                                  text: "Register",
                                   onPressed: isLoading ? null : _signUp,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.black,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 14,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  child: isLoading
-                                      ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Text(
-                                          "Register",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
                                 ),
                               ),
 
                               const SizedBox(height: 16),
 
-                              // Login Link
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [

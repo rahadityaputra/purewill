@@ -1,7 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:purewill/core/utils/indonesia_timezone.dart';
+import 'package:purewill/features/user/providers/timezone_provider.dart';
 import 'package:purewill/features/user/views/profile_screen.dart';
 
-class HabitHeader extends StatelessWidget {
+class HabitHeader extends ConsumerStatefulWidget {
   final String username;
   final String fullname;
   final String? avatarUrl;
@@ -16,7 +22,42 @@ class HabitHeader extends StatelessWidget {
   });
 
   @override
+  ConsumerState<HabitHeader> createState() => _HabitHeaderState();
+}
+
+class _HabitHeaderState extends ConsumerState<HabitHeader> {
+  late Timer _clockTimer;
+  DateTime _now = nowInIndonesia();
+
+  @override
+  void initState() {
+    super.initState();
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        _now = nowInIndonesia();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _clockTimer.cancel();
+    super.dispose();
+  }
+
+  String _formatDateTime(DateTime dateTime, AppTimezoneOption option) {
+    final dateLabel = DateFormat('EEE, dd MMM yyyy', 'en_US').format(dateTime);
+    final timeLabel = DateFormat('HH:mm:ss').format(dateTime);
+    return '$dateLabel • $timeLabel ${option.label}';
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final timezoneState = ref.watch(timezoneProvider);
+    final selectedTimezone = timezoneState.selectedTimezone;
+    final displayNow = _now;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
@@ -34,8 +75,8 @@ class HabitHeader extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: _ProfileAvatar(
-              fullname: fullname,
-              avatarUrl: avatarUrl,
+              fullname: widget.fullname,
+              avatarUrl: widget.avatarUrl,
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const ProfileScreen()),
@@ -48,7 +89,7 @@ class HabitHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Hi, $username',
+                  'Hi, ${widget.username}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -58,12 +99,20 @@ class HabitHeader extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  fullname,
+                  widget.fullname,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: TextStyle(color: Colors.black54, fontSize: 14),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _formatDateTime(displayNow, selectedTimezone),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
                     color: Colors.black54,
-                    fontSize: 14,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -109,11 +158,11 @@ class _ProfileAvatar extends StatelessWidget {
           ],
         ),
         child: CircleAvatar(
-          radius: 30,
+          radius: 20,
           backgroundColor: Colors.grey[200],
           backgroundImage: hasImage ? NetworkImage(avatarUrl!) : null,
-          onBackgroundImageError: hasImage 
-              ? (exception, stackTrace) => print('Error loading avatar') 
+          onBackgroundImageError: hasImage
+              ? (exception, stackTrace) => print('Error loading avatar')
               : null,
           child: !hasImage
               ? Text(
@@ -133,7 +182,10 @@ class _ProfileAvatar extends StatelessWidget {
   String _initials(String value) {
     final cleaned = value.trim();
     if (cleaned.isEmpty) return '?';
-    final parts = cleaned.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = cleaned
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
     return '${parts.first[0]}${parts[1][0]}'.toUpperCase();

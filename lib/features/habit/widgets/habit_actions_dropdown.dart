@@ -2,23 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:purewill/features/habit/models/habit_model.dart';
 import 'package:purewill/features/habit/views/edit_habit_screen.dart';
 import 'package:purewill/features/habit/views/reminder_list_screen.dart';
+import 'package:purewill/core/widgets/dialogs/app_confirm_dialog.dart';
 
 class HabitActionsDropdown extends StatelessWidget {
   final Function(String) onActionSelected;
   final String habitName;
   final HabitModel habit;
+  final Color iconColor;
 
   const HabitActionsDropdown({
     super.key,
     required this.onActionSelected,
     required this.habitName,
     required this.habit,
+    this.iconColor = Colors.white,
   });
 
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert, color: Colors.white),
+      icon: Icon(Icons.more_vert, color: iconColor),
       onSelected: onActionSelected,
       itemBuilder: (BuildContext context) => [
         const PopupMenuItem<String>(
@@ -63,22 +66,12 @@ class HabitActionsDropdown extends StatelessWidget {
   }) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Habit'),
-        content: Text('Are you sure you want to delete "$habitName"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              onConfirm();
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+      builder: (context) => AppConfirmDialog(
+        title: 'Delete Habit',
+        message: 'Are you sure you want to delete "$habitName"?',
+        confirmLabel: 'Delete',
+        confirmColor: Colors.red,
+        onConfirm: onConfirm,
       ),
     );
   }

@@ -84,12 +84,9 @@ class _UpdateReminderScreenState extends ConsumerState<UpdateReminderScreen> {
     setState(() => _isSaving = true);
     try {
       final now = nowInIndonesia();
-      final scheduledDateTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        _selectedTime.hour,
-        _selectedTime.minute,
+      final scheduledDateTime = buildDateTimeInCurrentTimezone(
+        _selectedTime,
+        referenceDate: now,
       );
 
       await _repository.updateReminderSetting(

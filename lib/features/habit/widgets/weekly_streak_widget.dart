@@ -24,12 +24,10 @@ class WeeklyStreakWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Fire Animation dan Streak Number di center
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // GIF Fire Icon
               _buildFireGif(),
               const SizedBox(width: 8),
               Text(
@@ -37,30 +35,28 @@ class WeeklyStreakWidget extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFFEA580C), // rgb(234 88 12)
+                  color: Color(0xFFEA580C),
                 ),
               ),
             ],
           ),
           
-          // "Days Streak" text di center
           const Text(
-            "Days Streak",
+            "Current Days Streak",
             style: TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w700, // Bold
-              color: Color(0xFFEA580C), // rgb(234 88 12)
+              fontWeight: FontWeight.w700, 
+              color: Color(0xFFEA580C), 
             ),
           ),
           
           const SizedBox(height: 8),
           
-          // Motivational Text di center
           const Text(
             "Keep it up! You're on fire!",
             style: TextStyle(
               fontSize: 14,
-              color: Color(0xFFEA580C), // rgb(234 88 12)
+              color: Color(0xFFEA580C), 
               fontWeight: FontWeight.w500,
             ),
           ),

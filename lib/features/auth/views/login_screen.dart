@@ -5,6 +5,7 @@ import 'package:purewill/features/auth/providers/auth_provider.dart';
 import 'package:purewill/features/auth/views/signup_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purewill/features/auth/view_models/auth_view_model.dart';
+import 'package:purewill/core/widgets/primary_action_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -563,41 +564,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                               SizedBox(
                                 width: double.infinity,
-                                child: ElevatedButton(
+                                child: PrimaryActionButton(
+                                  text: "Login",
                                   onPressed: isLoading ? null : _login,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.black,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    elevation: 4,
-                                    shadowColor: Colors.black.withOpacity(0.3),
-                                    textStyle: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  child: isLoading
-                                      ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                                  Colors.white,
-                                                ),
-                                          ),
-                                        )
-                                      : const Text("Login"),
                                 ),
                               ),
 
-                              SizedBox(height: 16),
+                              SizedBox(height: 8),
 
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,

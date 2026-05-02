@@ -34,7 +34,6 @@ class HabitModel {
   final String name;
   final String frequency;
   final DateTime startDate;
-  final bool isActive;
   final CategoryModel? category;
   final String? notes;
   final DateTime? endDate;
@@ -49,6 +48,7 @@ class HabitModel {
   final double? targetLong;
   final int? radius;
   final bool isDefault;
+  final double? value;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -58,7 +58,6 @@ class HabitModel {
     required this.name,
     required this.frequency,
     required this.startDate,
-    this.isActive = true,
     this.category,
     this.notes,
     this.endDate,
@@ -73,9 +72,14 @@ class HabitModel {
     this.targetLong,
     this.radius,
     this.isDefault = false,
+    this.value,
     this.createdAt,
     this.updatedAt,
   });
+
+  bool isActiveOn(DateTime date) {
+    return !dateOnlyInIndonesia(startDate).isAfter(dateOnlyInIndonesia(date));
+  }
 
   factory HabitModel.fromJson(Map<String, dynamic> json) {
     int _parseInt(dynamic value, {int fallback = 0}) {
@@ -198,7 +202,6 @@ class HabitModel {
       startDate:
           _parseNullableDate(json['startDate'] ?? json['start_date']) ??
           nowInIndonesia(),
-      isActive: (json['isActive'] ?? json['is_active']) == true,
       category: _parseCategory(
         json['category'],
         json['categoryId'] ?? json['category_id'],
@@ -230,6 +233,7 @@ class HabitModel {
         json['radius'] ?? json['radious'] ?? json['radius'],
       ),
       isDefault: (json['isDefault'] ?? json['is_default']) == true,
+      value: json['value'] is num ? (json['value'] as num).toDouble() : null,
       createdAt: _parseNullableDate(json['createdAt'] ?? json['created_at']),
       updatedAt: _parseNullableDate(json['updatedAt'] ?? json['updated_at']),
     );
@@ -241,7 +245,6 @@ class HabitModel {
       'name': name,
       'frequencyType': frequency.toUpperCase(),
       'startDate': startDate.toIso8601String(),
-      'isActive': isActive,
       'status': status,
       'todayLogStatus': _todayLogStatusToJson(todayLogStatus),
       'isDefault': isDefault,
@@ -277,6 +280,9 @@ class HabitModel {
     }
     if (radius != null) {
       json['radius'] = radius!;
+    }
+    if (value != null) {
+      json['value'] = value!;
     }
     if (createdAt != null) {
       json['createdAt'] = createdAt!.toIso8601String();

@@ -14,6 +14,7 @@ class HabitDetailState {
   final List<HabitLogModel> habitLogForThisWeek;
   final int completedDays;
   final int habitLogStreak;
+  final int bestHabitLogStreak;
   final int possibleDays;
   final HabitModel? currentHabitDetail;
 
@@ -25,6 +26,7 @@ class HabitDetailState {
     this.habitLogForThisWeek = const [],
     this.completedDays = 0,
     this.habitLogStreak = 0,
+    this.bestHabitLogStreak = 0,
     this.possibleDays = 0,
     this.currentHabitDetail,
   });
@@ -37,6 +39,7 @@ class HabitDetailState {
     List<HabitLogModel>? habitLogForThisWeek,
     int? completedDays,
     int? habitLogStreak,
+    int? bestHabitLogStreak,
     int? possibleDays,
     HabitModel? currentHabitDetail,
   }) {
@@ -48,6 +51,7 @@ class HabitDetailState {
       habitLogForThisWeek: habitLogForThisWeek ?? this.habitLogForThisWeek,
       completedDays: completedDays ?? this.completedDays,
       habitLogStreak: habitLogStreak ?? this.habitLogStreak,
+      bestHabitLogStreak: bestHabitLogStreak ?? this.bestHabitLogStreak,
       possibleDays: possibleDays ?? this.possibleDays,
       currentHabitDetail: currentHabitDetail ?? this.currentHabitDetail,
     );
@@ -113,7 +117,7 @@ class HabitDetailViewModel extends StateNotifier<HabitDetailState> {
         habitDetail.endDate,
       );
       final streak = _calculateCurrentStreak(logs, habitDetail.startDate);
-
+      final bestStreak = _calculateBestStreak(logs);
       state = state.copyWith(
         status: HabitStatus.success,
         currentHabitDetail: habitDetail,
@@ -123,6 +127,7 @@ class HabitDetailViewModel extends StateNotifier<HabitDetailState> {
         completedDays: completedDays,
         possibleDays: possibleDays,
         habitLogStreak: streak,
+        bestHabitLogStreak: bestStreak,
       );
     } catch (e) {
       state = state.copyWith(
@@ -229,8 +234,44 @@ class HabitDetailViewModel extends StateNotifier<HabitDetailState> {
     return streak;
   }
 
-  // NOTE:
-  // For long-term data efficiency, ideally the backend provides an endpoint
-  // query range (contoh: /habits/:id/logs?startDate=...&endDate=...) agar client
-  // so the client does not always need to fetch all logs and filter them on the frontend.
+  int _calculateBestStreak(List<HabitLogModel> logs) {
+    if (logs.isEmpty) return 0;
+
+    final sorted = List<HabitLogModel>.from(logs)
+      ..sort((a, b) => a.logDate.compareTo(b.logDate));
+
+    final successDates = sorted
+        .where((log) => log.status == LogStatus.success)
+        .map((log) => _dateOnly(log.logDate))
+        .toSet()
+        .toList();
+
+    if (successDates.isEmpty) return 0;
+
+    int bestStreak = 0;
+    int currentTempStreak = 0;
+    DateTime? previousDate;
+
+    for (final currentDate in successDates) {
+      if (previousDate == null) {
+        currentTempStreak = 1;
+      } else {
+        final gap = currentDate.difference(previousDate).inDays;
+
+        if (gap == 1) {
+          currentTempStreak++;
+        } else {
+          currentTempStreak = 1;
+        }
+      }
+
+      if (currentTempStreak > bestStreak) {
+        bestStreak = currentTempStreak;
+      }
+
+      previousDate = currentDate;
+    }
+
+    return bestStreak;
+  }
 }

@@ -15,6 +15,8 @@ import 'package:purewill/features/habit/views/habit_detail_screen.dart';
 import 'package:purewill/features/habit/views/habit_screen.dart';
 import 'package:purewill/features/nofap/views/nofap_screen.dart';
 import 'package:purewill/features/habit/models/habit_log_model.dart';
+import 'package:purewill/core/widgets/dialogs/app_alert_dialog.dart';
+import 'package:purewill/core/widgets/dialogs/app_loading_dialog.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -46,10 +48,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         MaterialPageRoute(builder: (context) => const ConversationListScreen()),
       );
     } else if (index == 4) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const ConversationListScreen()),
-      );
-    } else if (index == 5) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const ConversationListScreen()),
       );
@@ -197,15 +195,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (msg.contains('di luar jangkauan') || msg.contains('out of range')) {
         showDialog(
           context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Location Out of Range'),
-            content: Text(msg),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('OK'),
-              ),
-            ],
+          builder: (ctx) => AppAlertDialog(
+            title: 'Location Out of Range',
+            message: msg,
+            actionLabel: 'OK',
           ),
         );
       } else {
@@ -224,7 +217,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
+        builder: (context) => const AppLoadingDialog(),
       );
 
       ref.read(authNotifierProvider.notifier).logout();

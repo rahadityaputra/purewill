@@ -17,6 +17,8 @@ class UserModel {
 
   String? get avatarUrl => profile.avatarUrl;
 
+  String? get bio => profile.bio;
+
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final profile = json['profile'];
     final profileMap = profile is Map<String, dynamic>
@@ -40,6 +42,10 @@ class UserModel {
             json['avatarUrl']?.toString() ??
             profileMap['avatar_url']?.toString() ??
             profileMap['avatarUrl']?.toString(),
+        bio:
+            json['bio']?.toString() ??
+            profileMap['bio']?.toString() ??
+            profileMap['about']?.toString(),
       ),
       username: json['username']?.toString(),
     );

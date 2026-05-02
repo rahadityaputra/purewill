@@ -5,6 +5,7 @@ import 'package:purewill/features/habit/models/habit_log_model.dart';
 import 'package:purewill/features/habit/models/habit_model.dart';
 import 'package:purewill/features/user/models/user_model.dart';
 import 'package:purewill/features/habit/view_models/habit_view_model.dart';
+import 'package:purewill/core/utils/indonesia_timezone.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -109,9 +110,7 @@ class HomeViewModel extends StateNotifier<HomeState> {
     state = state.copyWith(status: HabitStatus.loading, errorMessage: null);
     try {
       final allHabits = await _fetchUserHabits();
-      final todayHabits = allHabits
-          .where((habit) => habit.isActive == true)
-          .toList();
+      final todayHabits = allHabits.where((habit) => habit.isActiveOn(nowInIndonesia())).toList();
 
       final meResponse = await _meApiService.getMe();
       final meData = meResponse['data'] as Map<String, dynamic>? ?? {};

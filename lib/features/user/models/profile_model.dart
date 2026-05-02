@@ -1,8 +1,9 @@
 class ProfileModel {
   final String fullName;
   final String? avatarUrl;
+  final String? bio;
 
-  ProfileModel({required this.fullName, this.avatarUrl});
+  ProfileModel({required this.fullName, this.avatarUrl, this.bio});
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
     final profile = json['profile'];
@@ -24,10 +25,14 @@ class ProfileModel {
           json['avatar_url']?.toString() ??
           profileMap['avatarUrl']?.toString() ??
           profileMap['avatar_url']?.toString(),
+      bio:
+          json['bio']?.toString() ??
+          profileMap['bio']?.toString() ??
+          profileMap['about']?.toString(),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'fullname': fullName, 'avatarUrl': avatarUrl};
+    return {'fullname': fullName, 'avatarUrl': avatarUrl, 'bio': bio};
   }
 }

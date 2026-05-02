@@ -41,13 +41,14 @@ class ReminderSettingModel {
       return fallback;
     }
 
-    // Parse the timestamp and convert to local time (server may return UTC)
+    // Parse the timestamp and convert to the currently selected app timezone.
     DateTime parsedTime;
     try {
       if (json['time'] is String) {
-        parsedTime = DateTime.parse(json['time'] as String);
-        // If server returned UTC (trailing Z) DateTime will be in UTC; convert to local
-        if (parsedTime.isUtc) parsedTime = parsedTime.toLocal();
+        parsedTime = parseUtcToIndonesia(
+          json['time'],
+          fallback: nowInIndonesia(),
+        );
       } else {
         parsedTime = nowInIndonesia();
       }
@@ -101,7 +102,7 @@ class ReminderSettingModel {
     final json = {
       'habitId': habitId,
       'isEnabled': isEnabled,
-      'time': time.toIso8601String(),
+      'time': toWibDateTime(time).toIso8601String(),
       'snoozeDuration': snoozeDuration,
       'repeatDaily': repeatDaily,
       'isSoundEnabled': isSoundEnabled,

@@ -8,6 +8,8 @@ import 'package:purewill/core/utils/indonesia_timezone.dart';
 import 'package:purewill/features/habit/views/habit_screen.dart';
 import 'package:purewill/features/home/views/home_screen.dart';
 import 'package:purewill/features/nofap/view_models/nofap_view_model.dart';
+import 'package:purewill/core/widgets/dialogs/app_alert_dialog.dart';
+import 'package:purewill/core/widgets/dialogs/app_confirm_dialog.dart';
 
 class NoFapScreen extends ConsumerStatefulWidget {
   const NoFapScreen({super.key});
@@ -17,8 +19,7 @@ class NoFapScreen extends ConsumerStatefulWidget {
 }
 
 class _NoFapScreenState extends ConsumerState<NoFapScreen> {
-  final int _currentIndex = 2; // Set to 2 because this is the NoFap screen.
-
+  final int _currentIndex = 2;
   @override
   void initState() {
     super.initState();
@@ -29,8 +30,6 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
   }
 
   void _onNavBarTap(int index) {
-    print('NavBar tapped: index $index');
-
     if (index == 0) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -55,44 +54,16 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
   void _resetStreak() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Reset Streak?',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          content: const Text(
+      builder: (context) => AppConfirmDialog(
+        title: 'Reset Streak?',
+        message:
             'Are you sure you want to reset your current streak? This action cannot be undone.',
-            style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.5),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                await _relapseCurrentSession('Streak reset from nofap screen');
-              },
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Reset'),
-            ),
-          ],
-        );
-      },
+        confirmLabel: 'Reset',
+        confirmColor: Colors.red,
+        onConfirm: () async {
+          await _relapseCurrentSession('Streak reset from nofap screen');
+        },
+      ),
     );
   }
 
@@ -107,95 +78,34 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
   }
 
   void _startHabit() {
-    // ref.watch(habitNotifierProvider.notifier).startNofapHabit();
-
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Start NoFap Journey?',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          content: const Text(
+      builder: (context) => AppConfirmDialog(
+        title: 'Start NoFap Journey?',
+        message:
             'Are you ready to start your NoFap journey? This will begin tracking your progress.',
-            style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.5),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                await _startCurrentSession();
-              },
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Start'),
-            ),
-          ],
-        );
-      },
+        confirmLabel: 'Start',
+        confirmColor: Colors.green,
+        onConfirm: () async {
+          await _startCurrentSession();
+        },
+      ),
     );
   }
 
   void _stopHabit() {
-    // ref.watch(habitNotifierProvider.notifier).stopNofapHabit();
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Relapse Occurred?',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          content: const Text(
+      builder: (context) => AppConfirmDialog(
+        title: 'Relapse Occurred?',
+        message:
             'Don\'t be too hard on yourself. Every setback is a setup for a comeback. Are you ready to restart?',
-            style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.5),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                await _relapseCurrentSession(
-                  'Relapse reported from nofap screen',
-                );
-              },
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Reset & Restart'),
-            ),
-          ],
-        );
-      },
+        confirmLabel: 'Reset & Restart',
+        confirmColor: Colors.orange,
+        onConfirm: () async {
+          await _relapseCurrentSession('Relapse reported from nofap screen');
+        },
+      ),
     );
   }
 
@@ -215,20 +125,11 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
 
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text('Session Cannot Be Started Yet'),
-          content: const Text(
-            'The NoFap session cannot be started again right now. Please try again later.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
+        builder: (context) => const AppAlertDialog(
+          title: 'Session Cannot Be Started Yet',
+          message:
+              'The NoFap session cannot be started again right now. Please try again later.',
+          actionLabel: 'OK',
         ),
       );
     }
@@ -272,13 +173,8 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromRGBO(176, 230, 216, 1),
         elevation: 4,
         shadowColor: Colors.black.withOpacity(0.2),
-        // leading: IconButton(
-        //   icon: const Icon(Icons.arrow_back, color: Colors.black87),
-        //   onPressed: () => Navigator.of(context).pop(),
-        // ),
         title: const Text(
           'NoFap Journey',
           style: TextStyle(
@@ -303,12 +199,10 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
       ),
       body: Stack(
         children: [
-          // Background Image
           Positioned.fill(
             child: Image.asset('assets/images/home/bg.png', fit: BoxFit.cover),
           ),
 
-          // Blur Effect
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
@@ -459,7 +353,6 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Benefits Card
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -517,7 +410,6 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Progress Calendar Card
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -547,76 +439,6 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
                       ],
                     ),
                   ),
-
-                  // Emergency Support Card
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.red.shade200),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.emergency,
-                          size: 32,
-                          color: Colors.red.shade600,
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Feeling Urges?',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Take deep breaths, go for a walk, or call a friend.',
-                          style: TextStyle(fontSize: 14, color: Colors.black87),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Remember your goals! You are stronger than your urges!',
-                                ),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.shade600,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text('Get Motivation'),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Bottom padding to prevent content from being hidden behind bottom nav
-                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -624,13 +446,11 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
         ],
       ),
 
-      // Bottom Navigation Bar
       bottomNavigationBar: CleanBottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onNavBarTap,
       ),
 
-      // Floating Action Button
       floatingActionButton: FloatingActionButton.extended(
         onPressed: nofapState.status == NofapStatus.loading
             ? null
@@ -704,9 +524,20 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
     final now = nowInIndonesia();
     final lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
     final daysInMonth = lastDayOfMonth.day;
+    final firstDayOfMonth = DateTime(now.year, now.month, 1);
+    final leadingEmptyCells = firstDayOfMonth.weekday % 7;
 
     return Column(
       children: [
+        Text(
+          '${_monthName(now.month)} ${now.year}',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 12),
         Row(
           children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
               .map(
@@ -727,7 +558,6 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
               )
               .toList(),
         ),
-        // Calendar grid
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -735,9 +565,13 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
             crossAxisCount: 7,
             childAspectRatio: 1,
           ),
-          itemCount: daysInMonth,
+          itemCount: leadingEmptyCells + daysInMonth,
           itemBuilder: (context, index) {
-            final day = index + 1;
+            if (index < leadingEmptyCells) {
+              return const SizedBox.shrink();
+            }
+
+            final day = index - leadingEmptyCells + 1;
             final currentDate = DateTime(now.year, now.month, day);
             final isToday = day == now.day;
             final isSuccess = successDays.any(
@@ -779,5 +613,28 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
         ),
       ],
     );
+  }
+
+  String _monthName(int month) {
+    const months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+
+    if (month < 1 || month > months.length) {
+      return '';
+    }
+
+    return months[month - 1];
   }
 }

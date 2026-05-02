@@ -7,6 +7,7 @@ import 'package:purewill/features/habit/services/local_notification_service.dart
 import 'package:purewill/features/habit/views/add_reminder_screen.dart';
 import 'package:purewill/features/habit/views/update_reminder_screen.dart';
 import 'package:purewill/features/habit/providers/habit_provider.dart';
+import 'package:purewill/core/widgets/primary_action_button.dart';
 
 class ReminderListScreen extends ConsumerStatefulWidget {
   final HabitModel habit;
@@ -119,7 +120,7 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                       children: [
                         const Text('No reminders yet for this habit.'),
                         const SizedBox(height: 12),
-                        ElevatedButton(
+                        PrimaryActionButton(
                           onPressed: () async {
                             await Navigator.push(
                               context,
@@ -130,7 +131,7 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                             );
                             await _load();
                           },
-                          child: const Text('Add Reminder'),
+                          text: 'Add Reminder',
                         ),
                       ],
                     )
@@ -185,28 +186,37 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => UpdateReminderScreen(
-                          habit: widget.habit,
-                          reminderSetting: setting,
+                Expanded(
+                  child: PrimaryActionButton(
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => UpdateReminderScreen(
+                            habit: widget.habit,
+                            reminderSetting: setting,
+                          ),
                         ),
-                      ),
-                    );
-                    await _load();
-                  },
-                  icon: const Icon(Icons.edit),
-                  label: const Text('Edit'),
+                      );
+                      await _load();
+                    },
+                    text: 'Edit',
+                    leadingIcon: const Icon(Icons.edit),
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    borderRadius: 12,
+                  ),
                 ),
                 const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: () => _delete(setting),
-                  icon: const Icon(Icons.delete),
-                  label: const Text('Delete'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                Expanded(
+                  child: PrimaryActionButton(
+                    onPressed: () => _delete(setting),
+                    text: 'Delete',
+                    leadingIcon: const Icon(Icons.delete),
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    borderRadius: 12,
+                  ),
                 ),
               ],
             ),

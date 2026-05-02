@@ -173,6 +173,7 @@ class HabitApiService {
         if (habit.unitId != null) 'unitId': habit.unitId,
         'frequencyType': habit.frequency.toUpperCase(),
         if (habit.targetValue != null) 'targetValue': habit.targetValue,
+        if (habit.value != null) 'value': habit.value,
         'isLocationLocked': habit.isLocationLocked,
         if (habit.locationName != null) 'locationName': habit.locationName,
         if (habit.targetLat != null) 'targetLat': habit.targetLat,

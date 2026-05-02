@@ -8,10 +8,12 @@ import 'package:purewill/features/habit/views/reminder_list_screen.dart';
 import 'package:purewill/features/habit/view_models/habit_detail_view_model.dart';
 import 'package:purewill/core/utils/habit_icon_helper.dart';
 import 'package:purewill/core/utils/indonesia_timezone.dart';
+import 'package:purewill/features/habit/widgets/best_streak_widget.dart';
 import 'package:purewill/features/habit/widgets/calendar_tracker_widget.dart';
 import 'package:purewill/features/habit/widgets/habit_actions_dropdown.dart';
 import 'package:purewill/features/habit/widgets/habit_detail_explanation_widget.dart';
 import 'package:purewill/features/habit/widgets/progress_widget.dart';
+import 'package:purewill/features/habit/widgets/value_earned_widget.dart';
 import 'package:purewill/features/habit/widgets/weekly_streak_widget.dart';
 
 class HabitDetailScreen extends ConsumerStatefulWidget {
@@ -44,11 +46,12 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
   Widget build(BuildContext context) {
     final habitDetailState = ref.watch(habitDetailProvider);
     final habit = habitDetailState.currentHabitDetail ?? widget.habit;
-
-    final iconData = HabitIconHelper.getHabitIcon(habit.name);
+    final habitName = habit.name;
     final iconColor = HabitIconHelper.getHabitColor(habit.name);
-    final category =
-        habit.category?.name ?? HabitIconHelper.getHabitCategory(habit.name);
+    final headerColor = _resolveHeaderColor(habit);
+    final isHeaderDark =
+        ThemeData.estimateBrightnessForColor(headerColor) == Brightness.dark;
+    final headerForegroundColor = isHeaderDark ? Colors.white : Colors.black87;
 
     if (habitDetailState.status == HabitStatus.loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -61,18 +64,12 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
         body: CustomScrollView(
           slivers: [
             SliverAppBar(
-              backgroundColor: const Color.fromRGBO(184, 230, 230, 1),
+              backgroundColor: headerColor,
               elevation: 0,
-              surfaceTintColor: Colors.transparent,
               pinned: true,
               expandedHeight: 140,
               flexibleSpace: FlexibleSpaceBar(
-                background: _buildHeaderBackground(
-                  habit.name,
-                  iconData,
-                  iconColor,
-                  category,
-                ),
+                background: _buildHeaderBackground(headerColor),
                 titlePadding: const EdgeInsets.only(
                   left: 0,
                   right: 0,
@@ -81,19 +78,20 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
                 collapseMode: CollapseMode.pin,
               ),
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                icon: Icon(Icons.arrow_back, color: headerForegroundColor),
                 onPressed: () => Navigator.pop(context, _shouldRefreshParent),
               ),
-              title: const Text(
-                "Habit detail",
+              title: Text(
+                habitName,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: headerForegroundColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               centerTitle: true,
               actions: [
                 HabitActionsDropdown(
+                  iconColor: headerForegroundColor,
                   onActionSelected: _handleMenuAction,
                   habitName: habit.name,
                   habit: habit,
@@ -111,6 +109,15 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
                       habit: habit,
                       habitColor: iconColor,
                     ),
+
+                    const SizedBox(height: 24),
+
+                    ValueEarnedWidget(
+                      habit: habit,
+                      habitLogs: habitDetailState.habitLogs,
+                      habitColor: iconColor,
+                    ),
+
                     const SizedBox(height: 24),
 
                     ProgressWidget(
@@ -122,15 +129,25 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
                       completedDays: habitDetailState.completedDays,
                       totalDays: habitDetailState.possibleDays,
                     ),
+
                     const SizedBox(height: 24),
 
                     WeeklyStreakWidget(streak: habitDetailState.habitLogStreak),
+
                     const SizedBox(height: 24),
+
+                    BestStreakWidget(
+                      streak: habitDetailState.bestHabitLogStreak,
+                    ),
+
+                    const SizedBox(height: 24),
+
                     CalendarTrackerWidget(
                       habitLogForThisMonth:
                           habitDetailState.habitLogForThisMonth,
                     ),
-                    const SizedBox(height: 16),
+
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -222,6 +239,10 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
 
       _shouldRefreshParent = true;
 
+      if (!mounted) {
+        return;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('"${habit.name}" deleted successfully')),
       );
@@ -240,89 +261,40 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
     return false;
   }
 
-  Widget _buildHeaderBackground(
-    String habitName,
-    IconData iconData,
-    Color iconColor,
-    String category,
-  ) {
-    return Container(
-      color: const Color.fromRGBO(184, 230, 230, 1),
-      padding: const EdgeInsets.only(
-        top: kToolbarHeight + 16,
-        left: 20,
-        right: 20,
-        bottom: 20,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(iconData, size: 25, color: iconColor),
-          ),
-          const SizedBox(width: 16),
+  Widget _buildHeaderBackground(Color headerColor) {
+    return Container(color: headerColor);
+  }
 
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Flexible(
-                  child: Text(
-                    habitName,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    softWrap: true,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Flexible(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.white.withOpacity(0.3)),
-                    ),
-                    child: Text(
-                      category,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  Color _resolveHeaderColor(HabitModel habit) {
+    final parsedCategoryColor = _parseCategoryColor(habit.category?.color);
+    if (parsedCategoryColor != null) {
+      return parsedCategoryColor;
+    }
+
+    final fallbackCategoryName =
+        habit.category?.name ?? HabitIconHelper.getHabitCategory(habit.name);
+    return HabitIconHelper.getHabitColor(fallbackCategoryName);
+  }
+
+  Color? _parseCategoryColor(String? rawColor) {
+    if (rawColor == null || rawColor.trim().isEmpty) {
+      return null;
+    }
+
+    var hex = rawColor.trim().replaceFirst('#', '');
+    if (hex.length == 6) {
+      hex = 'FF$hex';
+    }
+    if (hex.length != 8) {
+      return null;
+    }
+
+    final value = int.tryParse(hex, radix: 16);
+    if (value == null) {
+      return null;
+    }
+
+    return Color(value);
   }
 
   bool _isTodayCompleted(List<HabitLogModel> logs) {

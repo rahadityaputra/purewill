@@ -1,6 +1,7 @@
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 
 enum AppTimezoneOption { wib, wita, wit, london }
 
@@ -112,6 +113,25 @@ DateTime dateOnlyInIndonesia(DateTime dateTime) {
 
 Future<void> setIndonesiaTimezone(AppTimezoneOption option) {
   return AppTimezone.setTimezone(option);
+}
+
+DateTime buildDateTimeInCurrentTimezone(
+  TimeOfDay timeOfDay, {
+  DateTime? referenceDate,
+}) {
+  final baseDate = referenceDate ?? nowInIndonesia();
+  return tz.TZDateTime(
+    AppTimezone.currentLocation,
+    baseDate.year,
+    baseDate.month,
+    baseDate.day,
+    timeOfDay.hour,
+    timeOfDay.minute,
+  );
+}
+
+DateTime toWibDateTime(DateTime dateTime) {
+  return tz.TZDateTime.from(dateTime, tz.getLocation('Asia/Jakarta'));
 }
 
 bool isSameIndonesiaDate(DateTime a, DateTime b) {

@@ -2,21 +2,34 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:purewill/features/auth/models/auth_model.dart';
+import 'package:purewill/features/auth/services/auth_repository.dart';
+import 'package:purewill/features/auth/services/auth_refresh_client.dart';
 import 'package:purewill/features/conversation/models/conversation_model.dart';
 import 'package:purewill/features/conversation/models/message_model.dart';
 
 class ConversationApiService {
   late final String _baseUrl;
   String? _accessToken;
+  late final http.Client _client;
 
-  ConversationApiService({http.Client? client})
-    : _client = client ?? http.Client() {
+  ConversationApiService({
+    http.Client? client,
+    AuthRepository? authRepository,
+  }) {
+    _client = authRepository != null
+        ? AuthRefreshClient(
+            client ?? http.Client(),
+            authRepository,
+            onTokenRefreshed: (token) {
+              _accessToken = token;
+            },
+          )
+        : (client ?? http.Client());
+
     final host = dotenv.env['API_HOST'] ?? 'localhost';
     final port = dotenv.env['API_PORT'] ?? '4000';
     _baseUrl = 'http://$host:$port/api/conversations';
   }
-
-  final http.Client _client;
 
   void setAccessToken(String token) {
     _accessToken = token;

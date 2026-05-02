@@ -19,6 +19,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _fullnameController;
   late final TextEditingController _usernameController;
   late final TextEditingController _emailController;
+  late final TextEditingController _bioController;
   bool _submitting = false;
   File? _avatarFile;
   String? _selectedGender;
@@ -34,6 +35,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       text: widget.user.username ?? '',
     );
     _emailController = TextEditingController(text: widget.user.email);
+    _bioController = TextEditingController(text: widget.user.bio ?? '');
   }
 
   @override
@@ -41,6 +43,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _fullnameController.dispose();
     _usernameController.dispose();
     _emailController.dispose();
+    _bioController.dispose();
     super.dispose();
   }
 
@@ -54,6 +57,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           email: _emailController.text.trim(),
           username: _usernameController.text.trim(),
           fullName: _fullnameController.text.trim(),
+          bio: _bioController.text.trim(),
           gender: _selectedGender,
           birthDate: _selectedBirthDate,
           avatar: _avatarFile,
@@ -235,6 +239,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         if (!text.contains('@')) return 'Enter a valid email';
                         return null;
                       },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _bioController,
+                      decoration: const InputDecoration(
+                        labelText: 'Bio (optional)',
+                        alignLabelWithHint: true,
+                        border: OutlineInputBorder(),
+                      ),
+                      minLines: 3,
+                      maxLines: 5,
+                      maxLength: 180,
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(

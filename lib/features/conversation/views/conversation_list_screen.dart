@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:purewill/core/widgets/clean_bottom_navigation_bar.dart';
 import 'package:purewill/features/conversation/models/conversation_model.dart';
 import 'package:purewill/features/conversation/providers/conversation_provider.dart';
 import 'package:purewill/features/conversation/views/conversation_detail_screen.dart';
+import 'package:purewill/features/habit/views/habit_screen.dart';
+import 'package:purewill/features/home/views/home_screen.dart';
+import 'package:purewill/features/nofap/views/nofap_screen.dart';
+import 'package:purewill/core/widgets/dialogs/app_confirm_dialog.dart';
+import 'package:purewill/core/widgets/dialogs/app_input_dialog.dart';
 
 class ConversationListScreen extends ConsumerStatefulWidget {
   const ConversationListScreen({super.key});
@@ -14,14 +20,45 @@ class ConversationListScreen extends ConsumerStatefulWidget {
 
 class _ConversationListScreenState
     extends ConsumerState<ConversationListScreen> {
+  final _currentIndex = 3;
+  void _onNavBarTap(int index) {
+    if (index == 0) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } else if (index == 1) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HabitScreen()),
+      );
+    } else if (index == 2) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const NoFapScreen()),
+      );
+    } else if (index == 3) {
+      return;
+    } else if (index == 4) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const ConversationListScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final conversationsAsync = ref.watch(conversationNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Conversations'),
         elevation: 0,
+        shadowColor: Colors.black.withOpacity(0.2),
+        title: const Text(
+          'Conversations',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -34,6 +71,12 @@ class _ConversationListScreenState
             },
           ),
         ],
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(16),
+            bottomRight: Radius.circular(16),
+          ),
+        ),
       ),
       body: conversationsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -111,6 +154,10 @@ class _ConversationListScreenState
                 ),
               ),
       ),
+      bottomNavigationBar: CleanBottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _onNavBarTap,
+      ),
     );
   }
 
@@ -119,39 +166,24 @@ class _ConversationListScreenState
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('New Conversation'),
-        content: TextField(
-          controller: titleController,
-          decoration: const InputDecoration(
-            hintText: 'Enter conversation title (optional)',
-            border: OutlineInputBorder(),
-          ),
-          maxLines: 1,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final title = titleController.text.trim().isEmpty
-                  ? null
-                  : titleController.text.trim();
+      builder: (context) => AppInputDialog(
+        title: 'New Conversation',
+        hintText: 'Enter conversation title (optional)',
+        controller: titleController,
+        confirmLabel: 'Create',
+        onConfirm: () async {
+          final title = titleController.text.trim().isEmpty
+              ? null
+              : titleController.text.trim();
 
-              final result = await ref
-                  .read(conversationNotifierProvider.notifier)
-                  .createConversation(title: title);
+          final result = await ref
+              .read(conversationNotifierProvider.notifier)
+              .createConversation(title: title);
 
-              if (result != null && mounted) {
-                _openConversation(result);
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
+          if (result != null && mounted) {
+            _openConversation(result);
+          }
+        },
       ),
     );
   }
@@ -169,33 +201,22 @@ class _ConversationListScreenState
   void _deleteConversation(String conversationId) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Conversation'),
-        content: const Text(
-          'Are you sure you want to delete this conversation?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final success = await ref
-                  .read(conversationNotifierProvider.notifier)
-                  .deleteConversation(conversationId);
+      builder: (context) => AppConfirmDialog(
+        title: 'Delete Conversation',
+        message: 'Are you sure you want to delete this conversation?',
+        confirmLabel: 'Delete',
+        confirmColor: Colors.red,
+        onConfirm: () async {
+          final success = await ref
+              .read(conversationNotifierProvider.notifier)
+              .deleteConversation(conversationId);
 
-              if (success && mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Conversation deleted')),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
+          if (success && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Conversation deleted')),
+            );
+          }
+        },
       ),
     );
   }

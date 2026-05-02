@@ -50,12 +50,12 @@ class CleanBottomNavigationBar extends StatelessWidget {
               label: 'NoFap',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.people_outline),
+              icon: Icon(Icons.chat_outlined),
               activeIcon: Icon(Icons.chat),
               label: 'Chatbot',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.chat_outlined),
+              icon: Icon(Icons.gamepad_outlined),
               activeIcon: Icon(Icons.gamepad),
               label: 'Game',
             ),

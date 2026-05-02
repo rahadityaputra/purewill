@@ -93,7 +93,6 @@ flutter:
     - assets/images/home/bg.png
     - .env
     - assets/images/home/habit_detail/fire-flame.gif
-    - assets/images/consultation/doctor.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

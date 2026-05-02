@@ -28,8 +28,6 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
   int _targetValue = 30;
   String _selectedUnit = 'glasses';
   bool _showCustomUnit = false;
-  bool _reminderEnabled = false;
-  TimeOfDay? _reminderTime;
 
   final List<String> _unitOptions = [
     'glasses',
@@ -79,18 +77,6 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
     _targetValueController.dispose();
     _customUnitController.dispose();
     super.dispose();
-  }
-
-  Future<void> _selectReminderTime() async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _reminderTime ?? TimeOfDay.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        _reminderTime = picked;
-      });
-    }
   }
 
   Future<void> _updateHabit() async {
@@ -521,108 +507,6 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.95),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Reminder',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                Switch(
-                                  value: _reminderEnabled,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _reminderEnabled = value;
-                                      if (value && _reminderTime == null) {
-                                        _reminderTime = TimeOfDay.now();
-                                      }
-                                    });
-                                  },
-                                  activeColor: Colors.purple,
-                                ),
-                              ],
-                            ),
-                            if (_reminderEnabled) ...[
-                              const SizedBox(height: 12),
-                              const Text(
-                                'Reminder Time',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              GestureDetector(
-                                onTap: _selectReminderTime,
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: Colors.grey.shade300,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        _reminderTime != null
-                                            ? '${_reminderTime!.hour.toString().padLeft(2, '0')}:${_reminderTime!.minute.toString().padLeft(2, '0')}'
-                                            : 'Select time',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: _reminderTime != null
-                                              ? Colors.black
-                                              : Colors.grey,
-                                        ),
-                                      ),
-                                      Icon(
-                                        Icons.access_time,
-                                        color: Colors.grey.shade500,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
                     SaveButton(onPressed: _updateHabit, text: 'Update Habit'),
                   ],
                 ),

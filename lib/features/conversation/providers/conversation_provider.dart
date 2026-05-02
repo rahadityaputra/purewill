@@ -7,7 +7,7 @@ import 'package:purewill/features/auth/providers/auth_provider.dart';
 
 final conversationApiServiceProvider = Provider<ConversationApiService>((ref) {
   final authRepo = ref.watch(authRepositoryProvider);
-  final service = ConversationApiService();
+  final service = ConversationApiService(authRepository: authRepo);
   if (authRepo.accessToken != null) {
     service.setAccessToken(authRepo.accessToken!);
   }
@@ -19,7 +19,6 @@ final conversationRepositoryProvider = Provider<ConversationRepository>((ref) {
   return ConversationRepository(apiService);
 });
 
-/// Provider for fetching all conversations
 final conversationsProvider = FutureProvider<List<ConversationModel>>((
   ref,
 ) async {
@@ -27,7 +26,6 @@ final conversationsProvider = FutureProvider<List<ConversationModel>>((
   return repository.getConversations();
 });
 
-/// Provider for conversation detail by ID
 final conversationDetailProvider =
     FutureProvider.family<ConversationModel, String>((
       ref,
@@ -37,7 +35,6 @@ final conversationDetailProvider =
       return repository.getConversationDetail(conversationId);
     });
 
-/// Provider for messages in a conversation
 final conversationMessagesProvider =
     FutureProvider.family<List<MessageModel>, String>((
       ref,
@@ -47,7 +44,6 @@ final conversationMessagesProvider =
       return repository.getMessages(conversationId: conversationId);
     });
 
-/// State notifier for managing conversation operations
 class ConversationNotifier extends AsyncNotifier<List<ConversationModel>> {
   late ConversationRepository _repository;
 
@@ -72,7 +68,6 @@ class ConversationNotifier extends AsyncNotifier<List<ConversationModel>> {
     }
   }
 
-  /// Delete a conversation
   Future<bool> deleteConversation(String conversationId) async {
     try {
       await _repository.deleteConversation(conversationId);

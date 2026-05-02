@@ -60,12 +60,9 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
     setState(() => _isSaving = true);
     try {
       final now = nowInIndonesia();
-      final scheduledDateTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        _selectedTime.hour,
-        _selectedTime.minute,
+      final scheduledDateTime = buildDateTimeInCurrentTimezone(
+        _selectedTime,
+        referenceDate: now,
       );
 
       final newReminder = ReminderSettingModel(

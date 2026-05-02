@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:purewill/core/utils/indonesia_timezone.dart';
 import 'package:purewill/features/habit/services/habit_api_service.dart';
 import 'package:purewill/features/user/services/me_api_service.dart';
 import 'package:purewill/features/habit/models/habit_log_model.dart';
@@ -110,7 +111,7 @@ class HomeViewModel extends StateNotifier<HomeState> {
     try {
       final allHabits = await _fetchUserHabits();
       final todayHabits = allHabits
-          .where((habit) => habit.isActive == true)
+          .where((habit) => habit.isActiveOn(nowInIndonesia()) == true)
           .toList();
 
       final meResponse = await _meApiService.getMe();
