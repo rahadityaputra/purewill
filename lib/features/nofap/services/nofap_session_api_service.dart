@@ -61,6 +61,42 @@ class NofapSessionApiService {
     );
   }
 
+  Future<Map<String, dynamic>> getStreakSummary() async {
+    final response = await _client.get(
+      Uri.parse('$baseUrl/nofap-sessions/streak'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return _decodeBody(response);
+    }
+
+    throw AuthException(
+      _extractErrorMessage(
+        response.body,
+        'Failed to get nofap streak summary: ${response.statusCode}',
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getRelapseCount() async {
+    final response = await _client.get(
+      Uri.parse('$baseUrl/nofap-sessions/relapse-count'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return _decodeBody(response);
+    }
+
+    throw AuthException(
+      _extractErrorMessage(
+        response.body,
+        'Failed to get nofap relapse count: ${response.statusCode}',
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getSessionDetail(int sessionId) async {
     final response = await _client.get(
       Uri.parse('$baseUrl/nofap-sessions/$sessionId'),

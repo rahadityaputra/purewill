@@ -5,6 +5,7 @@ import 'package:purewill/features/habit/models/habit_model.dart';
 import 'package:purewill/features/habit/widgets/habit_header.dart';
 import 'package:purewill/core/widgets/progress_card.dart';
 import 'package:purewill/features/home/widgets/habit_today_card_list.dart';
+import 'package:purewill/features/pet_game/pet_screen.dart';
 import 'package:purewill/features/user/models/user_model.dart';
 import 'package:purewill/features/auth/providers/auth_provider.dart';
 import 'package:purewill/features/auth/views/login_screen.dart';
@@ -49,7 +50,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     } else if (index == 4) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const ConversationListScreen()),
+        MaterialPageRoute(builder: (context) => const PetScreen()),
       );
     } else {
       setState(() {

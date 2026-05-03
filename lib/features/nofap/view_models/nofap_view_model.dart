@@ -13,6 +13,9 @@ class NofapState {
   final String? errorMessage;
   final NofapSessionModel? currentSession;
   final List<NofapSessionModel> meSessions;
+  final int? apiCurrentStreak;
+  final int? apiBestStreak;
+  final int? apiTotalRelapseCount;
   final MotivationModel? motivation;
   final List<String> benefits;
 
@@ -21,6 +24,9 @@ class NofapState {
     this.errorMessage,
     this.currentSession,
     this.meSessions = const [],
+    this.apiCurrentStreak,
+    this.apiBestStreak,
+    this.apiTotalRelapseCount,
     this.motivation,
     this.benefits = const [
       'Increased energy and motivation',
@@ -34,6 +40,9 @@ class NofapState {
   bool get isHabitStarted => currentSession?.isActive == true;
 
   int get currentStreak {
+    final apiValue = apiCurrentStreak;
+    if (apiValue != null) return apiValue;
+
     final session = currentSession;
     if (session == null || !session.isActive) return 0;
 
@@ -43,6 +52,9 @@ class NofapState {
   }
 
   int get longestStreak {
+    final apiValue = apiBestStreak;
+    if (apiValue != null) return apiValue;
+
     final sessions = meSessions;
     if (sessions.isEmpty) return 0;
 
@@ -61,6 +73,9 @@ class NofapState {
   }
 
   int get totalRelapses {
+    final apiValue = apiTotalRelapseCount;
+    if (apiValue != null) return apiValue;
+
     if (meSessions.isEmpty) return 0;
     return meSessions.where((session) => session.endDate != null).length;
   }
@@ -86,6 +101,9 @@ class NofapState {
     String? errorMessage,
     NofapSessionModel? currentSession,
     List<NofapSessionModel>? meSessions,
+    int? apiCurrentStreak,
+    int? apiBestStreak,
+    int? apiTotalRelapseCount,
     MotivationModel? motivation,
     bool clearCurrentSession = false,
   }) {
@@ -96,6 +114,9 @@ class NofapState {
           ? null
           : currentSession ?? this.currentSession,
       meSessions: meSessions ?? this.meSessions,
+      apiCurrentStreak: apiCurrentStreak ?? this.apiCurrentStreak,
+      apiBestStreak: apiBestStreak ?? this.apiBestStreak,
+      apiTotalRelapseCount: apiTotalRelapseCount ?? this.apiTotalRelapseCount,
       motivation: motivation ?? this.motivation,
       benefits: benefits,
     );
@@ -118,10 +139,28 @@ class NofapViewModel extends StateNotifier<NofapState> {
     state = state.copyWith(status: NofapStatus.loading, errorMessage: null);
 
     try {
-      final currentResponse = await _apiService.getCurrentSession();
-      final currentData = currentResponse['data'];
-      final meSessions = await _loadMeSessions();
-      final motivation = await _motivationService.getRandomMotivation();
+      final currentResponse = _apiService.getCurrentSession();
+      final streakResponse = _apiService.getStreakSummary();
+      final relapseResponse = _apiService.getRelapseCount();
+      final meSessionsFuture = _loadMeSessions();
+      final motivationFuture = _motivationService.getRandomMotivation();
+
+      final results = await Future.wait([
+        currentResponse,
+        streakResponse,
+        relapseResponse,
+        meSessionsFuture,
+        motivationFuture,
+      ]);
+
+      final currentResponseData = results[0] as Map<String, dynamic>;
+      final streakResponseData = results[1] as Map<String, dynamic>;
+      final relapseResponseData = results[2] as Map<String, dynamic>;
+      final currentData = currentResponseData['data'];
+      final streakData = streakResponseData['data'];
+      final relapseData = relapseResponseData['data'];
+      final meSessions = results[3] as List<NofapSessionModel>;
+      final motivation = results[4] as MotivationModel?;
 
       state = state.copyWith(
         status: NofapStatus.success,
@@ -130,6 +169,9 @@ class NofapViewModel extends StateNotifier<NofapState> {
             : null,
         meSessions: meSessions,
         motivation: motivation,
+        apiCurrentStreak: _readOptionalInt(streakData, 'currentStreak'),
+        apiBestStreak: _readOptionalInt(streakData, 'bestStreak'),
+        apiTotalRelapseCount: _readOptionalInt(relapseData, 'totalRelapse'),
         clearCurrentSession: currentData == null,
       );
     } catch (e) {
@@ -150,12 +192,23 @@ class NofapViewModel extends StateNotifier<NofapState> {
       final session = data is Map<String, dynamic>
           ? NofapSessionModel.fromJson(data)
           : null;
+      final streakResponse = await _apiService.getStreakSummary();
+      final relapseResponse = await _apiService.getRelapseCount();
       final meSessions = await _loadMeSessions();
 
       state = state.copyWith(
         status: NofapStatus.success,
         currentSession: session,
         meSessions: meSessions,
+        apiCurrentStreak: _readOptionalInt(
+          streakResponse['data'],
+          'currentStreak',
+        ),
+        apiBestStreak: _readOptionalInt(streakResponse['data'], 'bestStreak'),
+        apiTotalRelapseCount: _readOptionalInt(
+          relapseResponse['data'],
+          'totalRelapse',
+        ),
         clearCurrentSession: session == null,
       );
     } catch (e) {
@@ -179,6 +232,8 @@ class NofapViewModel extends StateNotifier<NofapState> {
       final stoppedSession = data is Map<String, dynamic>
           ? NofapSessionModel.fromJson(data)
           : null;
+      final streakResponse = await _apiService.getStreakSummary();
+      final relapseResponse = await _apiService.getRelapseCount();
       final meSessions = await _loadMeSessions();
 
       state = state.copyWith(
@@ -186,6 +241,15 @@ class NofapViewModel extends StateNotifier<NofapState> {
         meSessions: meSessions.isNotEmpty
             ? meSessions
             : [if (stoppedSession != null) stoppedSession],
+        apiCurrentStreak: _readOptionalInt(
+          streakResponse['data'],
+          'currentStreak',
+        ),
+        apiBestStreak: _readOptionalInt(streakResponse['data'], 'bestStreak'),
+        apiTotalRelapseCount: _readOptionalInt(
+          relapseResponse['data'],
+          'totalRelapse',
+        ),
         clearCurrentSession: true,
       );
     } catch (e) {
@@ -195,6 +259,16 @@ class NofapViewModel extends StateNotifier<NofapState> {
       );
       rethrow;
     }
+  }
+
+  int? _readOptionalInt(dynamic source, String key) {
+    if (source is! Map) return null;
+
+    final value = source[key];
+    if (value == null) return null;
+    if (value is int) return value;
+
+    return int.tryParse(value.toString());
   }
 
   Future<List<NofapSessionModel>> _loadMeSessions() async {

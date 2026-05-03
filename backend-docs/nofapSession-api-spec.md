@@ -8,6 +8,8 @@
 ## Overview
 
 - `GET /api/nofap-sessions/current` mengambil nofap session aktif (`endDate = null`) milik user login.
+- `GET /api/nofap-sessions/streak` mengambil ringkasan streak nofap user login (`currentStreak` dan `bestStreak`).
+- `GET /api/nofap-sessions/relapse-count` mengambil total relapse user login.
 - `GET /api/nofap-sessions/:id` mengambil detail nofap session berdasarkan id.
 - `POST /api/nofap-sessions` membuat nofap session baru untuk user login.
 - `PATCH /api/nofap-sessions/current` mengupdate nofap session aktif (biasanya untuk stop session / relapse).
@@ -52,7 +54,77 @@
 
 ---
 
-## 2) Get Nofap Session Detail
+## 2) Get Nofap Session Streak
+
+### Endpoint
+
+- `GET /api/nofap-sessions/streak`
+
+### Request
+
+- Membutuhkan header `Authorization: Bearer <access_token>`.
+
+### Success Response
+
+- Status: `200 OK`
+
+```json
+{
+  "message": "successfully get nofap session streak",
+  "data": {
+    "currentStreak": 12,
+    "bestStreak": 28
+  }
+}
+```
+
+### Error Responses
+
+- `400 Bad Request` - `user id is required`
+- `401 Unauthorized` - access token is required
+
+### Notes
+
+- `currentStreak` dihitung dari session aktif jika ada, dan bernilai `0` jika tidak ada session aktif.
+- `bestStreak` adalah durasi streak terpanjang dari semua session user, termasuk session aktif.
+
+---
+
+## 3) Get Nofap Session Total Relapse
+
+### Endpoint
+
+- `GET /api/nofap-sessions/relapse-count`
+
+### Request
+
+- Membutuhkan header `Authorization: Bearer <access_token>`.
+
+### Success Response
+
+- Status: `200 OK`
+
+```json
+{
+  "message": "successfully get nofap session total relapse",
+  "data": {
+    "totalRelapse": 4
+  }
+}
+```
+
+### Error Responses
+
+- `400 Bad Request` - `user id is required`
+- `401 Unauthorized` - access token is required
+
+### Notes
+
+- `totalRelapse` dihitung dari jumlah nofap session yang sudah berakhir, yaitu session dengan `endDate != null`.
+
+---
+
+## 4) Get Nofap Session Detail
 
 ### Endpoint
 
@@ -91,7 +163,7 @@
 
 ---
 
-## 3) Create Nofap Session
+## 5) Create Nofap Session
 
 ### Endpoint
 
@@ -138,7 +210,7 @@
 
 ---
 
-## 4) Update Current Nofap Session
+## 6) Update Current Nofap Session
 
 ### Endpoint
 
