@@ -94,17 +94,67 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
   }
 
   void _stopHabit() {
+    final reasonController = TextEditingController();
+
     showDialog(
       context: context,
-      builder: (context) => AppConfirmDialog(
-        title: 'Relapse Occurred?',
-        message:
-            'Don\'t be too hard on yourself. Every setback is a setup for a comeback. Are you ready to restart?',
-        confirmLabel: 'Reset & Restart',
-        confirmColor: Colors.orange,
-        onConfirm: () async {
-          await _relapseCurrentSession('Relapse reported from nofap screen');
-        },
+      builder: (context) => AlertDialog(
+        title: const Text('Relapse Occurred?'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Don\'t be too hard on yourself. Every setback is a setup for a comeback.',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'What caused the relapse? (Optional)',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: reasonController,
+                decoration: InputDecoration(
+                  hintText: 'Enter the reason...',
+                  hintStyle: TextStyle(color: Colors.grey.shade400),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+                maxLines: 3,
+                maxLength: 200,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              final reason = reasonController.text.trim();
+              final finalMessage = reason.isNotEmpty
+                  ? 'Relapse reported from nofap screen. Reason: $reason'
+                  : 'Relapse reported from nofap screen';
+
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
+              await _relapseCurrentSession(finalMessage);
+            },
+            child: const Text('Reset & Restart'),
+          ),
+        ],
       ),
     );
   }

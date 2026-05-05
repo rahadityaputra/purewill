@@ -15,7 +15,6 @@ class HomeState {
   final List<HabitModel> todayHabits;
   final Map<int, LogStatus> todayCompletionStatus;
   final UserModel? currentUser;
-  final bool isLoadingRole;
 
   LogStatus _mapTodayLogStatus(TodayLogStatus status) {
     switch (status) {
@@ -62,7 +61,6 @@ class HomeState {
     this.todayHabits = const [],
     this.todayCompletionStatus = const {},
     this.currentUser,
-    this.isLoadingRole = false,
   });
 
   HomeState copyWith({
@@ -81,7 +79,6 @@ class HomeState {
       todayCompletionStatus:
           todayCompletionStatus ?? this.todayCompletionStatus,
       currentUser: currentUser ?? this.currentUser,
-      isLoadingRole: isLoadingRole ?? this.isLoadingRole,
     );
   }
 }

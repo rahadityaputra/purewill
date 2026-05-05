@@ -163,6 +163,32 @@ class NofapSessionApiService {
     );
   }
 
+  /// Stops the current nofap session.
+  /// `relapseNote` is required and will be sent to the API as `relapseNote`.
+  Future<Map<String, dynamic>> stopCurrentSession({
+    required String relapseNote,
+    DateTime? endDate,
+  }) async {
+    final body = <String, dynamic>{'relapseNote': relapseNote};
+
+    final response = await _client.patch(
+      Uri.parse('$baseUrl/nofap-sessions/current'),
+      headers: _headers,
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      return _decodeBody(response);
+    }
+
+    throw AuthException(
+      _extractErrorMessage(
+        response.body,
+        'Failed to stop current nofap session: ${response.statusCode}',
+      ),
+    );
+  }
+
   Map<String, dynamic> _decodeBody(http.Response response) {
     if (response.body.isEmpty) return {};
 

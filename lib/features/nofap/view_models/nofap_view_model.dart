@@ -220,13 +220,12 @@ class NofapViewModel extends StateNotifier<NofapState> {
     }
   }
 
-  Future<void> stopCurrentSession({String? relapseNotes}) async {
+  Future<void> stopCurrentSession({required String relapseNotes}) async {
     state = state.copyWith(status: NofapStatus.loading, errorMessage: null);
 
     try {
-      final response = await _apiService.updateCurrentSession(
-        endDate: nowInIndonesia(),
-        relapseNotes: relapseNotes,
+      final response = await _apiService.stopCurrentSession(
+        relapseNote: relapseNotes,
       );
       final data = response['data'];
       final stoppedSession = data is Map<String, dynamic>
