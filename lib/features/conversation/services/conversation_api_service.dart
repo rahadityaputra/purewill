@@ -2,8 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:purewill/features/auth/models/auth_model.dart';
-import 'package:purewill/features/auth/services/auth_repository.dart';
-import 'package:purewill/features/auth/services/auth_refresh_client.dart';
 import 'package:purewill/features/conversation/models/conversation_model.dart';
 import 'package:purewill/features/conversation/models/message_model.dart';
 
@@ -12,20 +10,8 @@ class ConversationApiService {
   String? _accessToken;
   late final http.Client _client;
 
-  ConversationApiService({
-    http.Client? client,
-    AuthRepository? authRepository,
-  }) {
-    _client = authRepository != null
-        ? AuthRefreshClient(
-            client ?? http.Client(),
-            authRepository,
-            onTokenRefreshed: (token) {
-              _accessToken = token;
-            },
-          )
-        : (client ?? http.Client());
-
+  ConversationApiService({http.Client? client})
+    : _client = client ?? http.Client() {
     final host = dotenv.env['API_HOST'] ?? 'localhost';
     final port = dotenv.env['API_PORT'] ?? '4000';
     _baseUrl = 'http://$host:$port/api/conversations';
@@ -42,8 +28,6 @@ class ConversationApiService {
     return 'Bearer $_accessToken';
   }
 
-  /// GET /api/conversations
-  /// Get list of conversations for the logged-in user
   Future<List<ConversationModel>> getConversations() async {
     final response = await _client.get(
       Uri.parse(_baseUrl),
@@ -74,8 +58,6 @@ class ConversationApiService {
     );
   }
 
-  /// POST /api/conversations
-  /// Create a new conversation
   Future<ConversationModel> createConversation({String? title}) async {
     final response = await _client.post(
       Uri.parse(_baseUrl),
@@ -105,8 +87,6 @@ class ConversationApiService {
     );
   }
 
-  /// GET /api/conversations/:id
-  /// Get conversation detail by ID
   Future<ConversationModel> getConversationDetail(String conversationId) async {
     final response = await _client.get(
       Uri.parse('$_baseUrl/$conversationId'),
@@ -138,8 +118,6 @@ class ConversationApiService {
     throw AuthException('Failed to fetch conversation: ${response.statusCode}');
   }
 
-  /// DELETE /api/conversations/:id
-  /// Delete conversation by ID
   Future<void> deleteConversation(String conversationId) async {
     final response = await _client.delete(
       Uri.parse('$_baseUrl/$conversationId'),
@@ -172,8 +150,6 @@ class ConversationApiService {
     );
   }
 
-  /// GET /api/conversations/:id/messages
-  /// Get messages for a conversation with pagination support
   Future<List<MessageModel>> getMessages({
     required String conversationId,
     int limit = 10,
@@ -221,8 +197,6 @@ class ConversationApiService {
     throw AuthException('Failed to fetch messages: ${response.statusCode}');
   }
 
-  /// POST /api/conversations/:id/messages
-  /// Create a message and get AI response
   Future<MessageResponseModel> sendMessage({
     required String conversationId,
     required String content,
@@ -235,8 +209,6 @@ class ConversationApiService {
       },
       body: jsonEncode({'content': content}),
     );
-
-    print(response.body);
 
     if (response.statusCode == 201) {
       final data = _decodeBody(response);

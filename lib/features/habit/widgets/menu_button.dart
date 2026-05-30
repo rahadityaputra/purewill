@@ -1,19 +1,18 @@
-// lib/ui/habit-tracker/widget/menu_button.dart
 import 'package:flutter/material.dart';
 
 class MenuButton extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
-  final String? subtitle; 
+  final String? subtitle;
   final int? badgeCount;
   final bool showSwitch;
   final bool? switchValue;
   final Function(bool)? onSwitchChanged;
-  
-  MenuButton({
+
+  const MenuButton({
     super.key,
-    required this.icon, 
+    required this.icon,
     required this.title,
     required this.onTap,
     this.subtitle,
@@ -22,9 +21,9 @@ class MenuButton extends StatelessWidget {
     this.switchValue,
     this.onSwitchChanged,
   }) : assert(
-          !showSwitch || (switchValue != null && onSwitchChanged != null),
-          'Jika showSwitch true, maka switchValue dan onSwitchChanged harus disediakan'
-        );
+         !showSwitch || (switchValue != null && onSwitchChanged != null),
+         'Jika showSwitch true, maka switchValue dan onSwitchChanged harus disediakan',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -38,10 +37,7 @@ class MenuButton extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               subtitle!,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
         ],
@@ -57,10 +53,10 @@ class MenuButton extends StatelessWidget {
       return Switch(
         value: switchValue!,
         onChanged: onSwitchChanged,
-        activeColor: Colors.deepPurple,
+        activeThumbColor: Colors.deepPurple,
       );
     }
-    
+
     if (badgeCount != null && badgeCount! > 0) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -78,7 +74,7 @@ class MenuButton extends StatelessWidget {
         ),
       );
     }
-    
+
     return const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey);
   }
 }

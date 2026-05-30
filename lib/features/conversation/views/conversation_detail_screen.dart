@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purewill/features/conversation/models/conversation_model.dart';
 import 'package:purewill/features/conversation/models/message_model.dart';
 import 'package:purewill/features/conversation/providers/conversation_provider.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
 import 'package:intl/intl.dart';
 
 class ConversationDetailScreen extends ConsumerStatefulWidget {
@@ -83,73 +84,32 @@ class _ConversationDetailScreenState
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.conversation.displayTitle),
-        elevation: 0,
-      ),
+      appBar: ConsistentAppBar(title: widget.conversation.displayTitle),
       body: Column(
         children: [
           Expanded(
             child: messagesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stackTrace) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Error loading messages',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      error.toString(),
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        ref
-                            .read(
-                              conversationMessagesNotifierProvider(
-                                widget.conversation.id,
-                              ).notifier,
-                            )
-                            .refresh();
-                      },
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
+              loading: () => const AppLoadingView(),
+              error: (error, stackTrace) => AppEmptyState(
+                icon: Icons.error_outline,
+                title: 'Error loading messages',
+                message: error.toString(),
+                actionLabel: 'Retry',
+                onAction: () {
+                  ref
+                      .read(
+                        conversationMessagesNotifierProvider(
+                          widget.conversation.id,
+                        ).notifier,
+                      )
+                      .refresh();
+                },
               ),
               data: (messages) => messages.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.chat_outlined,
-                            size: 48,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No messages yet',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Start the conversation by sending a message',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
+                  ? const AppEmptyState(
+                      icon: Icons.chat_outlined,
+                      title: 'No messages yet',
+                      message: 'Start the conversation by sending a message',
                     )
                   : ListView.builder(
                       controller: _scrollController,
@@ -165,7 +125,6 @@ class _ConversationDetailScreenState
                     ),
             ),
           ),
-          // Message input area
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(

@@ -111,7 +111,7 @@ class HabitActionsDropdown extends StatelessWidget {
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(SnackBar(content: Text('"$habitName" deleted')));
-              Navigator.pop(context); // Kembali ke home setelah delete
+              Navigator.pop(context); 
             },
           );
         }
@@ -135,10 +135,4 @@ class HabitActionsDropdown extends StatelessWidget {
       MaterialPageRoute(builder: (context) => ReminderListScreen(habit: habit)),
     );
   }
-
-  // static void _showComingSoonSnackBar(BuildContext context, String feature) {
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     SnackBar(content: Text('$feature - Coming Soon')),
-  //   );
-  // }
 }

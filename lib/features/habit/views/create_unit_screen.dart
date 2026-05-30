@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purewill/features/habit/providers/category_unit_management_provider.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
 
 class CreateUnitScreen extends ConsumerStatefulWidget {
   const CreateUnitScreen({super.key});
@@ -54,7 +55,7 @@ class _CreateUnitScreenState extends ConsumerState<CreateUnitScreen> {
     final vm = ref.read(createUnitViewModelProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Unit')),
+      appBar: const ConsistentAppBar(title: 'Create Unit'),
       body: AnimatedBuilder(
         animation: vm,
         builder: (context, _) {
@@ -93,7 +94,7 @@ class _CreateUnitScreenState extends ConsumerState<CreateUnitScreen> {
                     validator: (value) {
                       final text = value?.trim() ?? '';
                       if (text.isEmpty) return null;
-                      if (text.length < 1) {
+                      if (text.isEmpty) {
                         return 'Minimum 1 character';
                       }
                       if (text.length > 50) {

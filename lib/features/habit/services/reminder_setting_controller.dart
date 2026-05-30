@@ -15,8 +15,6 @@ class ReminderSettingController with ChangeNotifier {
   ReminderSettingModel? _reminderSetting;
   bool _isLoading = true;
   bool _hasChanges = false;
-
-  // Form state
   final List<int> _snoozeOptions = [5, 10, 15, 30, 60];
   int _selectedSnoozeIndex = 1;
   int _customSnoozeMinutes = 5;
@@ -37,8 +35,6 @@ class ReminderSettingController with ChangeNotifier {
        _habitApiService = habitApiService {
     _initialize();
   }
-
-  // Getters
   bool get isLoading => _isLoading;
   bool get hasChanges => _hasChanges;
   List<int> get snoozeOptions => _snoozeOptions;
@@ -58,21 +54,19 @@ class ReminderSettingController with ChangeNotifier {
 
   Future<void> _loadReminderSettings() async {
     try {
-      // debugPrint('🔄 Loading reminder settings for habit: ${habit.id}');
-
       final settings = await _repository.fetchReminderSettingsByHabit(habit.id);
 
       if (settings.isEmpty == false) {
         _reminderSetting = settings;
         _initializeFormFromModel(_reminderSetting!);
-        // debugPrint('✅ Loaded existing reminder: ${_reminderSetting!.time}');
       } else {
         _reminderSetting = ReminderSettingModel.empty(habitId: habit.id);
         _initializeFormFromModel(_reminderSetting!);
-        // debugPrint('✅ Created new reminder model');
       }
     } catch (e) {
-      // debugPrint('❌ Error loading reminder settings: $e');
+      debugPrint(
+        'ReminderSettingController: failed to load reminder settings for habit ${habit.id}: $e',
+      );
       _reminderSetting = ReminderSettingModel.empty(habitId: habit.id);
       _initializeFormFromModel(_reminderSetting!);
     } finally {
@@ -97,30 +91,15 @@ class ReminderSettingController with ChangeNotifier {
     _repeatDaily = model.repeatDaily;
     _soundEnabled = model.isSoundEnabled;
     _vibrationEnabled = model.isVibrationEnabled;
-
-    // debugPrint(
-    // '✅ Form initialized with time: ${_selectedTime.hour}:${_selectedTime.minute}',
-    // );
   }
 
-  // Setters
   void setSelectedTime(TimeOfDay time) {
     final now = TimeOfDay.now();
-
-    // Check if selected time is in the past
     if (time.hour < now.hour ||
-        (time.hour == now.hour && time.minute <= now.minute)) {
-      // debugPrint(
-      // '⚠️  WARNING: Selected time ($time) is in the past compared to current time ($now)',
-      // );
-      // debugPrint('💡 TIP: Set reminder for at least 1-2 minutes from now');
-    }
+        (time.hour == now.hour && time.minute <= now.minute)) {}
 
     _selectedTime = time;
     _hasChanges = true;
-    // debugPrint(
-    // '🕐 Time changed to: ${getTimeString(time)} (Current: ${getTimeString(now)})',
-    // );
     notifyListeners();
   }
 
@@ -168,10 +147,8 @@ class ReminderSettingController with ChangeNotifier {
     notifyListeners();
   }
 
-  // SIMPLIFIED: Main save method
   Future<void> saveSettings() async {
     if (habit.id <= 0) {
-      // debugPrint('❌ Invalid habit ID: ${habit.id}');
       return;
     }
 
@@ -182,9 +159,6 @@ class ReminderSettingController with ChangeNotifier {
       final snoozeDuration = _useCustomSnooze
           ? _customSnoozeMinutes
           : _snoozeOptions[_selectedSnoozeIndex];
-
-      // FIX: Use the correct time for the reminder
-      // Create a DateTime with the user-selected time, but keep the date the same
       final now = nowInIndonesia();
       final scheduledDateTime = DateTime(
         now.year,
@@ -193,17 +167,6 @@ class ReminderSettingController with ChangeNotifier {
         _selectedTime.hour,
         _selectedTime.minute,
       );
-
-      // debugPrint('💾 SAVING REMINDER:');
-      // debugPrint(
-      // '   - Selected Time: ${_selectedTime.hour}:${_selectedTime.minute}',
-      // );
-      // debugPrint('   - Scheduled DateTime: $scheduledDateTime');
-      // debugPrint('   - Device Now: $now');
-      // debugPrint('   - Enabled: $_pushNotification');
-      // debugPrint('   - Repeat Daily: $_repeatDaily');
-
-      // Update habit table
       await _updateHabitReminderSettings(_pushNotification);
 
       if (_reminderSetting != null && _reminderSetting!.id.isNotEmpty) {
@@ -238,12 +201,11 @@ class ReminderSettingController with ChangeNotifier {
           );
         }
       } else {
-        // Create a new reminder with the correct time
         final newReminder = ReminderSettingModel(
-          id: '', // Force new creation
+          id: '',
           habitId: habit.id,
           isEnabled: _pushNotification,
-          time: scheduledDateTime, // This will be stored in the database
+          time: scheduledDateTime,
           snoozeDuration: snoozeDuration,
           repeatDaily: _repeatDaily,
           isSoundEnabled: _soundEnabled,
@@ -253,20 +215,14 @@ class ReminderSettingController with ChangeNotifier {
 
         _reminderSetting = await _repository.createReminderSetting(newReminder);
       }
-
-      // Schedule notification if enabled
       if (_pushNotification) {
         await _scheduleNotification();
       } else {
         await _notificationService.cancelHabitNotifications(habit.id);
-        // debugPrint('🔕 Notifications disabled');
       }
 
       _hasChanges = false;
-      // debugPrint('✅ Reminder settings saved successfully');
     } catch (e) {
-      // debugPrint('❌ Error saving settings: $e');
-      // debugPrint('Stack trace: $stackTrace');
       rethrow;
     } finally {
       _isLoading = false;
@@ -278,42 +234,24 @@ class ReminderSettingController with ChangeNotifier {
     final timeString =
         '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}:00';
 
-    // debugPrint('🔄 Updating habit settings:');
-    // debugPrint('   - Reminder Enabled: $reminderEnabled');
-    // debugPrint('   - Reminder Time: $timeString');
-
     try {
       await _habitApiService.updateHabit(habit.id, {
         'reminderEnabled': reminderEnabled,
         'reminderTime': timeString,
       });
-
-      // debugPrint('✅ Habit update completed');
     } catch (e) {
-      // debugPrint('❌ Error updating habit: $e');
       rethrow;
     }
   }
 
-  // SIMPLIFIED: Schedule notification
   Future<void> _scheduleNotification() async {
     try {
-      // debugPrint('🔔 SCHEDULING NOTIFICATION');
-
-      // Cancel existing notifications first
       await _notificationService.cancelHabitNotifications(habit.id);
-
-      // Check permissions
       final hasPermission = await _notificationService.checkPermissions();
       if (!hasPermission) {
-        // debugPrint('❌ Notification permission not granted');
         return;
       }
-
-      // Generate unique ID
       final notificationId = _generateNotificationId();
-
-      // Schedule the reminder
       await _notificationService.scheduleHabitReminder(
         id: notificationId,
         title: 'Habit Reminder: ${habit.name}',
@@ -322,84 +260,56 @@ class ReminderSettingController with ChangeNotifier {
         habitId: habit.id.toString(),
         repeatDaily: _repeatDaily,
       );
-
-      // debugPrint('✅ Notification scheduling completed');
     } catch (e) {
-      // debugPrint('❌ ERROR in scheduling: $e');
-      // debugPrint('Stack trace: $stackTrace');
-
-      // Fallback: Show test notification
       await _notificationService.showTestNotification(habit.name);
     }
   }
 
-  // Generate unique notification ID
   int _generateNotificationId() {
     return (habit.id * 10000) +
         (_selectedTime.hour * 100 + _selectedTime.minute);
   }
 
-  // Get snooze duration
-  // int _getSnoozeDuration() {
-  //   return _useCustomSnooze
-  //       ? _customSnoozeMinutes
-  //       : _snoozeOptions[_selectedSnoozeIndex];
-  // }
-
-  // Test methods
   Future<void> testNotification() async {
     try {
       await _notificationService.showTestNotification(habit.name);
     } catch (e) {
-      // debugPrint('❌ Error testing notification: $e');
+      debugPrint(
+        'ReminderSettingController: failed to test notification for habit ${habit.id}: $e',
+      );
     }
   }
 
   Future<void> checkPendingNotifications() async {
     try {
-      // debugPrint('📋 ========== CHECKING PENDING NOTIFICATIONS ==========');
-
       final pending = await _notificationService.getPendingNotifications();
-      // debugPrint('   - Total pending: ${pending.length}');
 
       int ourNotifications = 0;
       for (final notification in pending) {
         if (notification.payload?.contains('habit_${habit.id}') == true) {
           ourNotifications++;
-          // debugPrint('   ✅ OUR NOTIFICATION:');
-          // debugPrint('      ID: ${notification.id}');
-          // debugPrint('      Title: ${notification.title}');
-          // debugPrint('      Body: ${notification.body}');
-          // debugPrint('      Payload: ${notification.payload}');
         }
       }
 
       if (ourNotifications == 0) {
-        // debugPrint('   ❌ NO NOTIFICATIONS FOUND FOR HABIT ${habit.id}');
-        // debugPrint('   This could mean:');
-        // debugPrint('   1. Notification was never scheduled');
-        // debugPrint('   2. Notification already triggered');
-        // debugPrint('   3. Notification was cancelled');
-      } else {
-        // debugPrint(
-        // '   📊 Found $ourNotifications notifications for this habit',
-        // );
-      }
+      } else {}
     } catch (e) {
-      // debugPrint('❌ Error checking pending notifications: $e');
+      debugPrint(
+        'ReminderSettingController: failed to inspect pending notifications for habit ${habit.id}: $e',
+      );
     }
   }
 
   Future<void> checkPermissions() async {
     try {
       await _notificationService.checkPermissions();
-      // debugPrint('   - Permission granted: $hasPermission');
     } catch (e) {
-      // debugPrint('❌ Error checking permissions: $e');
+      debugPrint(
+        'ReminderSettingController: failed to check permissions for habit ${habit.id}: $e',
+      );
     }
   }
 
-  // Reset reminder data
   Future<void> resetReminderData() async {
     try {
       await _repository.deleteAllReminderSettingsForHabit(habit.id);
@@ -413,14 +323,13 @@ class ReminderSettingController with ChangeNotifier {
 
       _reminderSetting = ReminderSettingModel.empty(habitId: habit.id);
       _initializeFormFromModel(_reminderSetting!);
-
-      // debugPrint('✅ Reminder data reset successfully');
     } catch (e) {
-      // debugPrint('❌ Error resetting reminder data: $e');
+      debugPrint(
+        'ReminderSettingController: failed to reset reminder data for habit ${habit.id}: $e',
+      );
     }
   }
 
-  // Format time string
   String getTimeString(TimeOfDay time) {
     final minute = time.minute.toString().padLeft(2, '0');
     final period = time.period == DayPeriod.am ? 'AM' : 'PM';
@@ -429,13 +338,5 @@ class ReminderSettingController with ChangeNotifier {
     return '$displayHour:$minute $period';
   }
 
-  // Debug current state
-  void debugCurrentState() {
-    // debugPrint('🎯 CURRENT STATE:');
-    // debugPrint('   Habit: ${habit.name} (ID: ${habit.id})');
-    // debugPrint('   Time: ${getTimeString(_selectedTime)}');
-    // debugPrint('   Enabled: $_pushNotification');
-    // debugPrint('   Repeat: $_repeatDaily');
-    // debugPrint('   Has Changes: $_hasChanges');
-  }
+  void debugCurrentState() {}
 }

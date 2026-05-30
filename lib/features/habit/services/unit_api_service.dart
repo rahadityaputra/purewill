@@ -1,27 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:purewill/features/auth/services/auth_repository.dart';
 import 'package:purewill/features/auth/models/auth_model.dart';
 import 'package:purewill/features/habit/models/target_unit_model.dart';
-import 'package:purewill/features/auth/services/auth_refresh_client.dart';
 
 class UnitApiService {
   late final String baseUrl;
   String? _accessToken;
   late final http.Client _client;
 
-  UnitApiService({http.Client? client, AuthRepository? authRepository}) {
-    _client = authRepository != null
-        ? AuthRefreshClient(
-            client ?? http.Client(),
-            authRepository,
-            onTokenRefreshed: (token) {
-              _accessToken = token;
-            },
-          )
-        : (client ?? http.Client());
+  UnitApiService({http.Client? client}) : _client = client ?? http.Client() {
     final host = dotenv.env['API_HOST'] ?? 'localhost';
     final port = dotenv.env['API_PORT'] ?? '4000';
     baseUrl = 'http://$host:$port/api/units';
@@ -59,11 +47,7 @@ class UnitApiService {
 
   Future<List<TargetUnitModel>> getAllUnits() async {
     try {
-      if (kDebugMode) print('📡 GET $baseUrl');
-
       final response = await _client.get(Uri.parse(baseUrl), headers: _headers);
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = _extractDataList(response.body);
@@ -91,8 +75,6 @@ class UnitApiService {
 
   Future<TargetUnitModel> getUnitDetail(int id) async {
     try {
-      if (kDebugMode) print('📡 GET $baseUrl/$id');
-
       final response = await _client.get(
         Uri.parse('$baseUrl/$id'),
         headers: _headers,
@@ -128,8 +110,6 @@ class UnitApiService {
         if (abbreviation != null && abbreviation.isNotEmpty)
           'abbreviation': abbreviation,
       };
-
-      if (kDebugMode) print('📡 POST $baseUrl');
 
       final response = await _client.post(
         Uri.parse(baseUrl),
@@ -167,8 +147,6 @@ class UnitApiService {
           'abbreviation': abbreviation,
       };
 
-      if (kDebugMode) print('📡 PATCH $baseUrl');
-
       final response = await _client.patch(
         Uri.parse(baseUrl),
         headers: _headers,
@@ -197,8 +175,6 @@ class UnitApiService {
 
   Future<void> deleteUnit(int id) async {
     try {
-      if (kDebugMode) print('📡 DELETE $baseUrl');
-
       final response = await _client.delete(
         Uri.parse(baseUrl),
         headers: _headers,

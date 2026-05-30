@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purewill/features/habit/providers/category_unit_management_provider.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
 
 class CreateCategoryScreen extends ConsumerStatefulWidget {
   const CreateCategoryScreen({super.key});
@@ -55,7 +56,7 @@ class _CreateCategoryScreenState extends ConsumerState<CreateCategoryScreen> {
     final vm = ref.read(createCategoryViewModelProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Category')),
+      appBar: const ConsistentAppBar(title: 'Create Category'),
       body: AnimatedBuilder(
         animation: vm,
         builder: (context, _) {

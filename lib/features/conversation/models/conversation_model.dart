@@ -22,7 +22,7 @@ class ConversationModel {
 
     return ConversationModel(
       id: json['id'] as String? ?? '',
-      userId: json['userId'] as String? ?? '',
+      userId: json['userId'].toString(),
       title: json['title'] as String?,
       createdAt: createdAtValue is String
           ? parseUtcToIndonesia(createdAtValue)

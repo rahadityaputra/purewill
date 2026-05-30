@@ -11,13 +11,11 @@ class HabitHeader extends ConsumerStatefulWidget {
   final String username;
   final String fullname;
   final String? avatarUrl;
-  final VoidCallback onLogout;
 
   const HabitHeader({
     super.key,
     required this.username,
     required this.fullname,
-    required this.onLogout,
     this.avatarUrl,
   });
 
@@ -46,10 +44,12 @@ class _HabitHeaderState extends ConsumerState<HabitHeader> {
     super.dispose();
   }
 
-  String _formatDateTime(DateTime dateTime, AppTimezoneOption option) {
-    final dateLabel = DateFormat('EEE, dd MMM yyyy', 'en_US').format(dateTime);
-    final timeLabel = DateFormat('HH:mm:ss').format(dateTime);
-    return '$dateLabel • $timeLabel ${option.label}';
+  String _formatDate(DateTime dateTime) {
+    return DateFormat('EEE, dd MMM yyyy', 'en_US').format(dateTime);
+  }
+
+  String _formatTime(DateTime dateTime) {
+    return DateFormat('HH:mm:ss').format(dateTime);
   }
 
   @override
@@ -59,66 +59,95 @@ class _HabitHeaderState extends ConsumerState<HabitHeader> {
     final displayNow = _now;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color.fromRGBO(176, 230, 216, 1),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: _ProfileAvatar(
-              fullname: widget.fullname,
-              avatarUrl: widget.avatarUrl,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                );
-              },
-            ),
+          _ProfileAvatar(
+            fullname: widget.fullname,
+            avatarUrl: widget.avatarUrl,
+            onTap: () {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+            },
           ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Hi, ${widget.username}',
+                  widget.username,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  widget.fullname,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Colors.black54, fontSize: 14),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _formatDateTime(displayNow, selectedTimezone),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.black54,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF111827),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 12),
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const Text(
+                  'Current time',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _formatTime(displayNow),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF111827),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    height: 1.0,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${_formatDate(displayNow)} • ${selectedTimezone.label}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -145,24 +174,24 @@ class _ProfileAvatar extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
       child: Container(
-        padding: const EdgeInsets.all(2),
+        padding: const EdgeInsets.all(2.5),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 1.5),
+          color: const Color(0xFFF9FAFB),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.grey[200],
-          backgroundImage: hasImage ? NetworkImage(avatarUrl!) : null,
+          radius: 19,
+          backgroundColor: const Color(0xFFE5E7EB),
           onBackgroundImageError: hasImage
-              ? (exception, stackTrace) => print('Error loading avatar')
+              ? (exception, stackTrace) => debugPrint('Error loading avatar')
               : null,
           child: !hasImage
               ? Text(

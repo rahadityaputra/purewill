@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:purewill/features/habit/views/category_list_screen.dart';
 import 'package:purewill/features/habit/views/unit_list_screen.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
 
 class CategoryUnitManagementScreen extends StatelessWidget {
   const CategoryUnitManagementScreen({super.key});
@@ -10,9 +11,9 @@ class CategoryUnitManagementScreen extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Category & Unit Management'),
-          bottom: const TabBar(
+        appBar: const ConsistentAppBar(
+          title: 'Category & Unit Management',
+          bottom: TabBar(
             tabs: [
               Tab(text: 'Category'),
               Tab(text: 'Unit'),

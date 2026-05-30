@@ -45,6 +45,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
   DateTime? _endDate;
   bool _endDateEnabled = false;
   bool _isLocationLocked = false;
+  bool _isLocationPickerOpen = false;
   double? _targetLat;
   double? _targetLong;
   int _radius = 50;
@@ -150,6 +151,12 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
   }
 
   Future<void> _showLocationPicker() async {
+    if (_isLocationPickerOpen) {
+      return;
+    }
+
+    _isLocationPickerOpen = true;
+
     double? tempLat = _targetLat;
     double? tempLong = _targetLong;
     int tempRadius = _radius;
@@ -157,19 +164,22 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
     ll.LatLng center = ll.LatLng(-6.200000, 106.816666);
     try {
       final pos = await Geolocator.getCurrentPosition();
-      print(pos.latitude);
-      print(pos.latitude);
+      debugPrint('Current location: ${pos.latitude}, ${pos.longitude}');
       center = ll.LatLng(pos.latitude, pos.longitude);
       tempLat ??= center.latitude;
       tempLong ??= center.longitude;
     } catch (e) {
-      print(e.toString());
-      // ignore - use default
+      debugPrint('AddHabitScreen location picker fallback: $e');
       tempLat ??= center.latitude;
       tempLong ??= center.longitude;
     }
 
-    await showModalBottomSheet(
+    if (!mounted) {
+      _isLocationPickerOpen = false;
+      return;
+    }
+
+    final result = await showModalBottomSheet<_LocationPickerResult>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) {
@@ -201,7 +211,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                           circles: [
                             CircleMarker(
                               point: ll.LatLng(tempLat!, tempLong!),
-                              color: Colors.blue.withOpacity(0.2),
+                              color: Colors.blue.withValues(alpha: 0.2),
                               borderStrokeWidth: 2,
                               radius: tempRadius.toDouble(),
                             ),
@@ -240,6 +250,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                                     tempLong = p.longitude;
                                   });
                                 } catch (e) {
+                                  if (!mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
@@ -290,12 +301,13 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                             Expanded(
                               child: PrimaryActionButton(
                                 onPressed: () {
-                                  setState(() {
-                                    _targetLat = tempLat;
-                                    _targetLong = tempLong;
-                                    _radius = tempRadius;
-                                  });
-                                  Navigator.of(ctx).pop();
+                                  Navigator.of(ctx).pop(
+                                    _LocationPickerResult(
+                                      latitude: tempLat,
+                                      longitude: tempLong,
+                                      radius: tempRadius,
+                                    ),
+                                  );
                                 },
                                 text: 'Save Location',
                                 width: double.infinity,
@@ -313,6 +325,21 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
         );
       },
     );
+
+    if (!mounted) {
+      _isLocationPickerOpen = false;
+      return;
+    }
+
+    if (result != null) {
+      setState(() {
+        _targetLat = result.latitude;
+        _targetLong = result.longitude;
+        _radius = result.radius;
+      });
+    }
+
+    _isLocationPickerOpen = false;
   }
 
   Future<void> _saveHabit() async {
@@ -364,7 +391,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
             .firstWhere((unit) => unit != null, orElse: () => null);
 
         await addHabitViewModel.addHabit(
-          name: _nameController.text,
+          name: _nameController.text.trim(),
           frequency: _selectedFrequency,
           categoryId: _selectedCategoryId,
           unitId: matchedUnit?.id,
@@ -626,7 +653,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: DropdownButtonFormField<String>(
-                                value: selectedUnitValue,
+                                initialValue: selectedUnitValue,
                                 decoration: InputDecoration(
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -849,7 +876,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                                       }
                                     });
                                   },
-                                  activeColor: Colors.purple,
+                                  activeThumbColor: Colors.purple,
                                 ),
                               ],
                             ),
@@ -928,8 +955,6 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Location Lock
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
@@ -964,7 +989,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                                 Switch(
                                   value: _isLocationLocked,
                                   onChanged: (v) => _handleLocationToggle(v),
-                                  activeColor: Colors.blue,
+                                  activeThumbColor: Colors.blue,
                                 ),
                               ],
                             ),
@@ -1045,8 +1070,6 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Value Field (IDR)
                     const Text(
                       'Value (IDR) - Optional',
                       style: TextStyle(
@@ -1089,8 +1112,6 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Note Field
                     const Text(
                       'Note',
                       style: TextStyle(
@@ -1141,4 +1162,16 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
       ),
     );
   }
+}
+
+class _LocationPickerResult {
+  final double? latitude;
+  final double? longitude;
+  final int radius;
+
+  const _LocationPickerResult({
+    required this.latitude,
+    required this.longitude,
+    required this.radius,
+  });
 }

@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:flutter/cupertino.dart';
 import 'package:purewill/features/conversation/services/conversation_api_service.dart';
 import 'package:purewill/features/auth/models/auth_model.dart';
 import 'package:purewill/features/conversation/models/conversation_model.dart';
@@ -25,7 +26,6 @@ class ConversationRepository {
     }
   }
 
-  /// Create a new conversation
   Future<ConversationModel> createConversation({String? title}) async {
     try {
       return await _apiService.createConversation(title: title);
@@ -41,7 +41,6 @@ class ConversationRepository {
     }
   }
 
-  /// Get conversation detail by ID
   Future<ConversationModel> getConversationDetail(String conversationId) async {
     try {
       return await _apiService.getConversationDetail(conversationId);
@@ -57,13 +56,13 @@ class ConversationRepository {
     }
   }
 
-  /// Delete conversation by ID
   Future<void> deleteConversation(String conversationId) async {
     try {
       await _apiService.deleteConversation(conversationId);
     } on AuthException {
       rethrow;
     } catch (e, stackTrace) {
+      debugPrint(e.toString());
       log(
         'FAILURE: Failed to delete conversation',
         error: e,
@@ -73,7 +72,6 @@ class ConversationRepository {
     }
   }
 
-  /// Get messages for a conversation (with pagination support)
   Future<List<MessageModel>> getMessages({
     required String conversationId,
     int limit = 10,
@@ -93,7 +91,6 @@ class ConversationRepository {
     }
   }
 
-  /// Send a message and get AI response
   Future<MessageResponseModel> sendMessage({
     required String conversationId,
     required String content,
@@ -106,7 +103,6 @@ class ConversationRepository {
     } on AuthException {
       rethrow;
     } catch (e, stackTrace) {
-      print(e.toString());
       log('FAILURE: Failed to send message', error: e, stackTrace: stackTrace);
       rethrow;
     }

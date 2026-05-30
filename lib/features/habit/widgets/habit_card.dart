@@ -1,126 +1,48 @@
 import 'package:flutter/material.dart';
-import 'package:percent_indicator/linear_percent_indicator.dart';
+import 'package:purewill/features/habit/models/category_model.dart';
 import 'package:purewill/features/habit/models/habit_model.dart';
 
 class HabitCard extends StatelessWidget {
-  final IconData icon;
   final String title;
-  final String subtitle;
-  final double progress;
   final Color color;
   final TodayLogStatus status;
-  final bool isDefault;
-  final String category; 
+  final CategoryModel category;
   final VoidCallback? onTap;
   final VoidCallback? onCheckboxTap;
 
   const HabitCard({
     super.key,
-    required this.icon,
     required this.title,
-    required this.subtitle,
     required this.color,
-    required this.progress,
     required this.status,
-    required this.category, 
-    this.isDefault = false,
+    required this.category,
     this.onTap,
     this.onCheckboxTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    // final isCompleted = status;
-    
+    final badgeColor = _parseColor(category.color) ?? color;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
+          color: Colors.white.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 5,
               offset: const Offset(0, 3),
             ),
           ],
-          border: isDefault ? Border.all(color: color.withOpacity(0.3)) : null,
+          border: Border.all(color: badgeColor.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
-            Stack(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: status == TodayLogStatus.success
-                      ? color.withOpacity(0.2)
-                      : color.withOpacity(0.1),
-                  child: Icon(
-                    icon,
-                    color: status == TodayLogStatus.success ? color : color.withOpacity(0.7),
-                    size: 22,
-                  ),
-                ),
-                if (isDefault)
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(
-                        color: Colors.blue,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.star,
-                        color: Colors.white,
-                        size: 10,
-                      ),
-                    ),
-                  ),
-                if (status == TodayLogStatus.success) 
-                  Positioned(
-                    right: -2,
-                    top: -2,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 10,
-                      ),
-                    ),
-                  ),
-
-                if (status == TodayLogStatus.failed) 
-                  Positioned(
-                    right: -2,
-                    top: -2,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
-                      ),
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 10,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,7 +55,9 @@ class HabitCard extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
-                            color: status == TodayLogStatus.success ? Colors.grey : Colors.black,
+                            color: status == TodayLogStatus.success
+                                ? Colors.grey
+                                : Colors.black,
                             decoration: status == TodayLogStatus.success
                                 ? TextDecoration.lineThrough
                                 : null,
@@ -142,28 +66,11 @@ class HabitCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (isDefault) ...[
-                        const SizedBox(width: 4),
-                        const Icon(Icons.star, color: Colors.blue, size: 12),
-                      ],
                     ],
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Expanded(
-                        child: Text(
-                          subtitle,
-                          style: TextStyle(
-                            color: status == TodayLogStatus.success ? Colors.green : status == TodayLogStatus.failed ? Colors.red : Colors.grey,
-                            fontWeight: status == TodayLogStatus.success
-                                ? FontWeight.w500
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ),
-                      
-                      // Kategori
                       Container(
                         margin: const EdgeInsets.only(left: 8),
                         padding: const EdgeInsets.symmetric(
@@ -171,28 +78,22 @@ class HabitCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
+                          color: badgeColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: color.withOpacity(0.3)),
+                          border: Border.all(
+                            color: badgeColor.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Text(
-                          category,
+                          category.name,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
-                            color: color,
+                            color: badgeColor,
                           ),
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 8),
-                  LinearPercentIndicator(
-                    lineHeight: 6,
-                    percent: 1,
-                    progressColor: status == TodayLogStatus.success ? Colors.green : status == TodayLogStatus.failed ? Colors.red : color,
-                    backgroundColor: Colors.grey[200]!,
-                    barRadius: const Radius.circular(8),
                   ),
                 ],
               ),
@@ -207,26 +108,26 @@ class HabitCard extends StatelessWidget {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: status == TodayLogStatus.success? Colors.green : status == TodayLogStatus.failed ? Colors.red : Colors.transparent,
+                    color: status == TodayLogStatus.success
+                        ? Colors.green
+                        : status == TodayLogStatus.failed
+                        ? Colors.red
+                        : Colors.transparent,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: status == TodayLogStatus.success? Colors.green : status == TodayLogStatus.failed ? Colors.red :  Colors.grey[400]!,
+                      color: status == TodayLogStatus.success
+                          ? Colors.green
+                          : status == TodayLogStatus.failed
+                          ? Colors.red
+                          : Colors.grey[400]!,
                       width: 2,
                     ),
                   ),
                   child: status == TodayLogStatus.success
-                      ? const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 20,
-                        )
+                      ? const Icon(Icons.check, color: Colors.white, size: 20)
                       : status == TodayLogStatus.failed
-                          ? const Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 20,
-                            )
-                          : null,
+                      ? const Icon(Icons.close, color: Colors.white, size: 20)
+                      : null,
                 ),
               ),
             ),
@@ -234,5 +135,19 @@ class HabitCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color? _parseColor(String? value) {
+    if (value == null || value.isEmpty) return null;
+
+    final normalized = value.replaceAll('#', '').trim();
+    final hexValue = normalized.length == 6 ? 'FF$normalized' : normalized;
+
+    if (hexValue.length != 8) return null;
+
+    final parsed = int.tryParse(hexValue, radix: 16);
+    if (parsed == null) return null;
+
+    return Color(parsed);
   }
 }

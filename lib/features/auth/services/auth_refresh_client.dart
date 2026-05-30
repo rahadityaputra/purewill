@@ -1,36 +1,93 @@
 import 'package:http/http.dart' as http;
-import 'package:purewill/features/auth/services/auth_repository.dart';
+import 'package:purewill/features/auth/services/auth_service.dart';
+import 'package:purewill/features/auth/models/auth_model.dart';
 
 class AuthRefreshClient extends http.BaseClient {
-  AuthRefreshClient(this._inner, this._authRepository, {this.onTokenRefreshed});
+  AuthRefreshClient(
+    this._inner,
+    this._authService, {
+    this.onTokenRefreshed,
+    this.onTokenExpired,
+  });
 
   final http.Client _inner;
-  final AuthRepository? _authRepository;
+  final AuthService? _authService;
   final void Function(String token)? onTokenRefreshed;
+
+  final Future<void> Function()? onTokenExpired;
+
+  bool _shouldAttemptRefresh(http.BaseRequest request, int statusCode) {
+    if (_authService == null) {
+      return false;
+    }
+
+    final hasBearerAuth =
+        request.headers['Authorization']?.toLowerCase().startsWith('bearer ') ??
+        false;
+    if (!hasBearerAuth) {
+      return false;
+    }
+    return statusCode == 401 || statusCode == 403;
+  }
+
+  bool _isTerminalAuthError(AuthException error) {
+    final message = error.message.toLowerCase();
+    const terminalMarkers = <String>[
+      'jwt expired',
+      'token expired',
+      'refresh token',
+      'unauthorized',
+      'not valid',
+      'invalid token',
+    ];
+
+    return terminalMarkers.any(message.contains);
+  }
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final response = await _inner.send(request);
 
-    if (response.statusCode != 401 || _authRepository == null) {
+    if (!_shouldAttemptRefresh(request, response.statusCode)) {
       return response;
     }
 
-    final refreshedToken = await _authRepository.refreshAccessToken();
-    if (refreshedToken == null || refreshedToken.isEmpty) {
+    final authService = _authService;
+    if (authService == null) {
       return response;
     }
 
-    onTokenRefreshed?.call(refreshedToken);
+    try {
+      final refreshedToken = await _ensureRefreshedToken(authService);
 
-    final retryRequest = _cloneRequest(request);
-    if (retryRequest == null) {
+      if (refreshedToken == null || refreshedToken.isEmpty) {
+        if (onTokenExpired != null) {
+          await onTokenExpired!();
+        }
+        return response;
+      }
+
+      onTokenRefreshed?.call(refreshedToken);
+
+      final retryRequest = _cloneRequest(request);
+      if (retryRequest == null) {
+        return response;
+      }
+
+      retryRequest.headers['Authorization'] = 'Bearer $refreshedToken';
+
+      return _inner.send(retryRequest);
+    } on AuthException catch (e) {
+      if (_isTerminalAuthError(e)) {
+        if (onTokenExpired != null) {
+          await onTokenExpired!();
+        }
+      }
+
+      return response;
+    } catch (e) {
       return response;
     }
-
-    retryRequest.headers['Authorization'] = 'Bearer $refreshedToken';
-
-    return _inner.send(retryRequest);
   }
 
   http.BaseRequest? _cloneRequest(http.BaseRequest request) {
@@ -57,6 +114,34 @@ class AuthRefreshClient extends http.BaseClient {
 
     return null;
   }
+
+  Future<String?> _ensureRefreshedToken(AuthService authService) async {
+    if (_authService == null) return null;
+
+    if (_refreshing != null) {
+      try {
+        return await _refreshing;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    _refreshing = (() async {
+      try {
+        return await authService.refreshAccessToken();
+      } finally {
+        _refreshing = null;
+      }
+    })();
+
+    try {
+      return await _refreshing;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?>? _refreshing;
 
   @override
   void close() {

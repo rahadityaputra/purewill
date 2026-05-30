@@ -7,6 +7,7 @@ import 'package:purewill/features/habit/models/reminder_setting_model.dart';
 import 'package:purewill/features/auth/providers/auth_provider.dart';
 import 'package:purewill/features/habit/providers/habit_provider.dart';
 import 'package:purewill/core/utils/indonesia_timezone.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
 
 class UpdateReminderScreen extends ConsumerStatefulWidget {
   final HabitModel habit;
@@ -41,7 +42,7 @@ class _UpdateReminderScreenState extends ConsumerState<UpdateReminderScreen> {
   void initState() {
     super.initState();
     final reminderApi = ref.read(reminderApiServiceProvider);
-    final token = ref.read(authRepositoryProvider).accessToken;
+    final token = ref.read(authServiceProvider).accessToken;
     if (token != null && token.isNotEmpty) {
       reminderApi.setAccessToken(token);
     }
@@ -135,7 +136,7 @@ class _UpdateReminderScreenState extends ConsumerState<UpdateReminderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Update Reminder')),
+      appBar: const ConsistentAppBar(title: 'Update Reminder'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

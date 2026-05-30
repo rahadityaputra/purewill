@@ -7,6 +7,7 @@ import 'package:purewill/features/habit/models/reminder_setting_model.dart';
 import 'package:purewill/features/auth/providers/auth_provider.dart';
 import 'package:purewill/features/habit/providers/habit_provider.dart';
 import '../services/reminder_setting_controller.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
 
 class ReminderSettingScreen extends ConsumerStatefulWidget {
   final HabitModel habit;
@@ -25,7 +26,6 @@ class _ReminderSettingScreenState extends ConsumerState<ReminderSettingScreen> {
   late ReminderSettingController _controller;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-
   @override
   void initState() {
     super.initState();
@@ -34,7 +34,7 @@ class _ReminderSettingScreenState extends ConsumerState<ReminderSettingScreen> {
 
   void _initializeController() {
     final habitApiService = ref.read(habitApiServiceProvider);
-    final token = ref.read(authRepositoryProvider).accessToken;
+    final token = ref.read(authServiceProvider).accessToken;
     if (token != null && token.isNotEmpty) {
       habitApiService.setAccessToken(token);
     }
@@ -83,22 +83,14 @@ class _ReminderSettingScreenState extends ConsumerState<ReminderSettingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        title: const Text(
-          'Reminder Settings',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        backgroundColor: Colors.blue[50],
-        foregroundColor: Colors.blue[800],
-        elevation: 0,
+      appBar: ConsistentAppBar(
+        title: 'Reminder Settings',
         actions: [
-          // Debug button
           IconButton(
             icon: const Icon(Icons.bug_report_outlined),
             onPressed: _controller.debugCurrentState,
             tooltip: 'Debug Current State',
           ),
-          // Save button di appbar jika ada perubahan
           if (_controller.hasChanges && !_controller.isLoading)
             TextButton(
               onPressed: _saveSettings,
@@ -112,7 +104,7 @@ class _ReminderSettingScreenState extends ConsumerState<ReminderSettingScreen> {
             ),
         ],
       ),
-      body: _controller.isLoading ? const _LoadingState() : _buildContent(),
+      body: _controller.isLoading ? const AppLoadingView() : _buildContent(),
     );
   }
 
@@ -123,23 +115,15 @@ class _ReminderSettingScreenState extends ConsumerState<ReminderSettingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 8),
-
-          // Header Info
           _buildHeaderSection(),
 
           const SizedBox(height: 24),
-
-          // Main Reminder Settings
           _buildMainSettingsSection(),
 
           const SizedBox(height: 24),
-
-          // Advanced Settings
           _buildAdvancedSettingsSection(),
 
           const SizedBox(height: 32),
-
-          // Save Button
           _buildSaveButton(),
 
           const SizedBox(height: 16),
@@ -285,7 +269,7 @@ class _ReminderSettingScreenState extends ConsumerState<ReminderSettingScreen> {
         subtitle: const Text('Receive notifications for this habit'),
         value: _controller.pushNotification,
         onChanged: (value) => _controller.setPushNotification(value),
-        activeColor: Colors.blue,
+        activeThumbColor: Colors.blue,
         secondary: const Icon(Icons.notifications, color: Colors.blue),
       ),
     );
@@ -363,8 +347,7 @@ class _ReminderSettingScreenState extends ConsumerState<ReminderSettingScreen> {
             width: isSelected ? 2 : 1,
           ),
         ),
-        child: RadioListTile<int>(
-          value: index,
+        child: RadioGroup<int>(
           groupValue: _controller.useCustomSnooze
               ? null
               : _controller.selectedSnoozeIndex,
@@ -373,12 +356,15 @@ class _ReminderSettingScreenState extends ConsumerState<ReminderSettingScreen> {
               _controller.setSnoozeOption(value);
             }
           },
-          activeColor: Colors.blue,
-          title: Text(
-            '${_controller.snoozeOptions[index]} minutes',
-            style: TextStyle(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? Colors.blue[800] : Colors.black,
+          child: RadioListTile<int>(
+            value: index,
+            activeColor: Colors.blue,
+            title: Text(
+              '${_controller.snoozeOptions[index]} minutes',
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? Colors.blue[800] : Colors.black,
+              ),
             ),
           ),
         ),
@@ -399,42 +385,47 @@ class _ReminderSettingScreenState extends ConsumerState<ReminderSettingScreen> {
           width: isSelected ? 2 : 1,
         ),
       ),
-      child: RadioListTile<int>(
-        value: -1,
+      child: RadioGroup<int>(
         groupValue: isSelected ? -1 : null,
         onChanged: (value) {
           if (value != null) {
             _controller.setUseCustomSnooze(true);
           }
         },
-        activeColor: Colors.blue,
-        title: Row(
-          children: [
-            const Text('Custom', style: TextStyle(fontWeight: FontWeight.w500)),
-            const SizedBox(width: 16),
-            SizedBox(
-              width: 100,
-              child: TextField(
-                controller: TextEditingController(
-                  text: _controller.customSnoozeMinutes.toString(),
-                ),
-                onChanged: (value) {
-                  final minutes = int.tryParse(value) ?? 5;
-                  _controller.setCustomSnooze(minutes);
-                },
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  hintText: 'Minutes',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+        child: RadioListTile<int>(
+          value: -1,
+          activeColor: Colors.blue,
+          title: Row(
+            children: [
+              const Text(
+                'Custom',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(width: 16),
+              SizedBox(
+                width: 100,
+                child: TextField(
+                  controller: TextEditingController(
+                    text: _controller.customSnoozeMinutes.toString(),
                   ),
-                  isDense: true,
+                  onChanged: (value) {
+                    final minutes = int.tryParse(value) ?? 5;
+                    _controller.setCustomSnooze(minutes);
+                  },
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    hintText: 'Minutes',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    isDense: true,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -513,7 +504,7 @@ class _ReminderSettingScreenState extends ConsumerState<ReminderSettingScreen> {
       trailing: Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: Colors.purple,
+        activeThumbColor: Colors.purple,
       ),
       contentPadding: EdgeInsets.zero,
     );
@@ -617,26 +608,5 @@ class _ReminderSettingScreenState extends ConsumerState<ReminderSettingScreen> {
       _controller.setSelectedTime(pickedTime);
       _showSnackBar('Time set to ${_controller.getTimeString(pickedTime)}');
     }
-  }
-}
-
-class _LoadingState extends StatelessWidget {
-  const _LoadingState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
-          Text(
-            'Loading reminder settings...',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ],
-      ),
-    );
   }
 }

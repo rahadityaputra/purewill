@@ -2,7 +2,7 @@ import 'package:purewill/core/utils/indonesia_timezone.dart';
 class MessageModel {
   final String id;
   final String conversationId;
-  final String role; // 'USER' or 'ASSISTANT'
+  final String role; 
   final String content;
   final DateTime createdAt;
 

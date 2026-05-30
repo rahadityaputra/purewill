@@ -7,11 +7,8 @@ import 'package:purewill/core/widgets/progress_card.dart';
 import 'package:purewill/features/home/widgets/habit_today_card_list.dart';
 import 'package:purewill/features/pet_game/pet_screen.dart';
 import 'package:purewill/features/user/models/user_model.dart';
-import 'package:purewill/features/auth/providers/auth_provider.dart';
-import 'package:purewill/features/auth/views/login_screen.dart';
 import 'package:purewill/features/conversation/views/conversation_list_screen.dart';
 import 'package:purewill/features/habit/providers/habit_provider.dart';
-import 'package:purewill/features/habit/view_models/habit_view_model.dart';
 import 'package:purewill/features/habit/views/habit_detail_screen.dart';
 import 'package:purewill/features/habit/views/habit_screen.dart';
 import 'package:purewill/features/nofap/views/nofap_screen.dart';
@@ -69,10 +66,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final homeState = ref.watch(homeNotifierProvider);
 
-    if (homeState.isLoadingRole || homeState.status == HabitStatus.loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
     final List<HabitModel> userHabits = homeState.todayHabits;
     final effectiveCompletionStatus = homeState.effectiveCompletionStatus;
     final UserModel? currentUser = homeState.currentUser;
@@ -102,7 +95,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   fullname: fullName,
                   username: username,
                   avatarUrl: currentUser?.avatarUrl,
-                  onLogout: _performLogout,
                 ),
                 Expanded(
                   child: SingleChildScrollView(
@@ -174,11 +166,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final previousStatus =
         ref.read(homeNotifierProvider).effectiveCompletionStatus[habit.id] ??
         LogStatus.neutral;
-
     try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AppLoadingDialog(),
+      );
+
       await ref
           .read(homeNotifierProvider.notifier)
           .toggleHabitCompletion(habit);
+
+      if (!mounted) return;
+
+      if (Navigator.of(context).canPop()) Navigator.of(context).pop();
 
       final newStatus =
           ref.read(homeNotifierProvider).effectiveCompletionStatus[habit.id] ??
@@ -192,14 +193,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _showSnackBar('Habit reset to neutral.');
       }
     } catch (e) {
+      if (!mounted) return;
+      if (Navigator.of(context).canPop()) Navigator.of(context).pop();
       final msg = e.toString();
       if (msg.contains('di luar jangkauan') || msg.contains('out of range')) {
         showDialog(
           context: context,
           builder: (ctx) => AppAlertDialog(
             title: 'Location Out of Range',
-            message: msg,
-            actionLabel: 'OK',
+            message: 'Kamu berada di luar radius presensi yang ditentukan.',
+            actionLabel: 'Coba Lagi',
+            actionColor: Colors.red.shade600,
+            image: Image.asset(
+              'assets/icons/location_error.png',
+              fit: BoxFit.cover,
+            ),
+            onAction: () {
+              debugPrint('User menekan OK/Coba Lagi');
+            },
           ),
         );
       } else {
@@ -210,46 +221,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         );
       }
-    }
-  }
-
-  void _performLogout() async {
-    try {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const AppLoadingDialog(),
-      );
-
-      ref.read(authNotifierProvider.notifier).logout();
-
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
-
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => LoginScreen()),
-        (Route<dynamic> route) => false,
-      );
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Logged out successfully'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } catch (e) {
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Logout failed: $e'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
-        ),
-      );
     }
   }
 }

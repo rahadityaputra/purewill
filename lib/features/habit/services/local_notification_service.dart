@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:purewill/core/utils/indonesia_timezone.dart';
+import 'dart:developer';
 
 class LocalNotificationService {
   static final LocalNotificationService _instance =
@@ -55,7 +56,6 @@ class LocalNotificationService {
     _instance._onNotificationTap?.call(response.payload);
   }
 
-  // Create notification channels untuk Android
   Future<void> _createNotificationChannels() async {
     try {
       final androidPlugin = _notificationsPlugin
@@ -66,7 +66,6 @@ class LocalNotificationService {
       await androidPlugin?.requestExactAlarmsPermission();
 
       if (androidPlugin != null) {
-        // Main habit reminders channel
         const AndroidNotificationChannel habitChannel =
             AndroidNotificationChannel(
               _habitChannelId,
@@ -78,7 +77,6 @@ class LocalNotificationService {
               enableVibration: true,
             );
 
-        // Test channel
         const AndroidNotificationChannel testChannel =
             AndroidNotificationChannel(
               _testChannelId,
@@ -89,14 +87,15 @@ class LocalNotificationService {
               enableVibration: true,
             );
 
-        // Create channels
         await androidPlugin.createNotificationChannel(habitChannel);
         await androidPlugin.createNotificationChannel(testChannel);
-
-        // debugPrint('📱 Notification channels created successfully');
       }
-    } catch (e) {
-      // debugPrint('❌ Error creating notification channels: $e');
+    } catch (e, stackTrace) {
+      log(
+        'LocalNotificationService: failed to create notification channels.',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -116,16 +115,14 @@ class LocalNotificationService {
         now.day,
         time.hour,
         time.minute,
-        0, // seconds
-        0, // milliseconds
+        0,
+        0,
       );
 
       if (scheduledTime.isBefore(now)) {
         scheduledTime = scheduledTime.add(const Duration(days: 1));
-        // debugPrint('   ⏰ Time passed today, scheduling for TOMORROW');
-      } else {
-        // debugPrint('   ⏰ Time is in the future, scheduling for TODAY');
       }
+
       final tzScheduledTime = tz.TZDateTime(
         AppTimezone.currentLocation,
         scheduledTime.year,
@@ -179,14 +176,17 @@ class LocalNotificationService {
 
       debugPrint('✅ NOTIFICATION SCHEDULED SUCCESSFULLY');
 
-      // Immediate verification
       await _verifyScheduledNotification(id);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      log(
+        'LocalNotificationService: failed to schedule habit reminder.',
+        error: e,
+        stackTrace: stackTrace,
+      );
       await showTestNotification(title.replaceFirst('Habit Reminder: ', ''));
     }
   }
 
-  // Helper method untuk format time
   String _formatTime(DateTime dateTime) {
     return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}:${dateTime.second.toString().padLeft(2, '0')}';
   }
@@ -222,23 +222,27 @@ class LocalNotificationService {
         notificationDetails,
         payload: 'test_$habitName',
       );
-
-      // debugPrint('✅ TEST NOTIFICATION SENT SUCCESSFULLY');
-    } catch (e) {
-      // debugPrint('❌ ERROR showing test notification: $e');
+    } catch (e, stackTrace) {
+      log(
+        'LocalNotificationService: failed to show test notification.',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
   Future<void> cancelNotification(int id) async {
     try {
       await _notificationsPlugin.cancel(id);
-      // debugPrint('✅ Notification $id cancelled');
-    } catch (e) {
-      // debugPrint('❌ Error cancelling notification $id: $e');
+    } catch (e, stackTrace) {
+      log(
+        'LocalNotificationService: failed to cancel notification $id.',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
-  // Cancel all notifications for a habit
   Future<void> cancelHabitNotifications(int habitId) async {
     try {
       final pending = await getPendingNotifications();
@@ -248,10 +252,12 @@ class LocalNotificationService {
           await cancelNotification(notification.id);
         }
       }
-
-      // debugPrint('✅ Cancelled $cancelledCount notifications for habit $habitId');
-    } catch (e) {
-      // debugPrint('❌ Error cancelling habit notifications: $e');
+    } catch (e, stackTrace) {
+      log(
+        'LocalNotificationService: failed to cancel habit notifications for habit $habitId.',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -263,7 +269,12 @@ class LocalNotificationService {
     try {
       final pending = await _notificationsPlugin.pendingNotificationRequests();
       return pending;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      log(
+        'LocalNotificationService: failed to read pending notifications.',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
@@ -302,14 +313,16 @@ class LocalNotificationService {
 
           await _notificationsPlugin.cancel(testId);
           hasPermission = true;
-          // debugPrint('   ✅ Android: Notifications are working');
-        } catch (e) {
-          // debugPrint('   ❌ Android: Notifications blocked - $e');
+        } catch (e, stackTrace) {
+          log(
+            'LocalNotificationService: Android permission test failed.',
+            error: e,
+            stackTrace: stackTrace,
+          );
           hasPermission = false;
         }
       }
 
-      // Check iOS
       final iOSPlugin = _notificationsPlugin
           .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin
@@ -322,53 +335,54 @@ class LocalNotificationService {
           sound: true,
         );
         hasPermission = result ?? false;
-        // debugPrint('   - iOS permission granted: $hasPermission');
       }
 
       return hasPermission;
-    } catch (e) {
-      // debugPrint('❌ Error checking permissions: $e');
+    } catch (e, stackTrace) {
+      log(
+        'LocalNotificationService: permission check failed.',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
 
-  // Request permissions
   Future<bool> requestNotificationPermissions() async {
     try {
       return await checkPermissions();
-    } catch (e) {
-      // debugPrint('❌ Error requesting permissions: $e');
+    } catch (e, stackTrace) {
+      log(
+        'LocalNotificationService: requestNotificationPermissions failed.',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
 
-  // Verify scheduled notification dengan detail
   Future<void> _verifyScheduledNotification(int id) async {
     try {
-      // debugPrint('🔍 VERIFYING SCHEDULED NOTIFICATION: $id');
-
       final pending = await _notificationsPlugin.pendingNotificationRequests();
-      // debugPrint('   - Total pending notifications: ${pending.length}');
 
       bool found = false;
       for (final notification in pending) {
-        // debugPrint('   - Pending: ID=${notification.id}, Title="${notification.title}", Time=${notification.body}');
         if (notification.id == id) {
           found = true;
           break;
         }
       }
 
-      if (!found) {
-        // debugPrint('   ❌ OUR NOTIFICATION NOT FOUND IN PENDING LIST!');
-        // debugPrint('   This means the scheduling failed silently');
-      }
-    } catch (e) {
-      // debugPrint('❌ Error verifying scheduled notification: $e');
+      if (!found) {}
+    } catch (e, stackTrace) {
+      log(
+        'LocalNotificationService: failed to verify scheduled notification $id.',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
-  // Handle notification on app startup
   static Future<void> handleNotificationOnStartup() async {
     try {
       final notificationService = LocalNotificationService();
@@ -381,8 +395,12 @@ class LocalNotificationService {
           _instance._onNotificationTap?.call(payload);
         }
       }
-    } catch (e) {
-      // debugPrint('❌ Error handling notification on startup: $e');
+    } catch (e, stackTrace) {
+      log(
+        'LocalNotificationService: startup notification handling failed.',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 

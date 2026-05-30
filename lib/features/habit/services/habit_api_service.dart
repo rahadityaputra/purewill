@@ -1,43 +1,22 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:purewill/features/auth/services/auth_repository.dart';
 import 'package:purewill/features/auth/models/auth_model.dart';
 import 'package:purewill/features/habit/models/habit_model.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter/foundation.dart';
-import 'package:purewill/features/auth/services/auto_refresh_request.dart';
-import 'package:purewill/features/auth/services/auth_refresh_client.dart';
 
 class HabitApiService {
   late final String baseUrl;
   String? _accessToken;
-  final AuthRepository? _authRepository;
   late final http.Client _client;
 
-  HabitApiService({http.Client? client, AuthRepository? authRepository})
-    : _authRepository = authRepository {
-    _client = authRepository != null
-        ? AuthRefreshClient(
-            client ?? http.Client(),
-            authRepository,
-            onTokenRefreshed: (token) {
-              _accessToken = token;
-            },
-          )
-        : (client ?? http.Client());
+  HabitApiService({http.Client? client}) : _client = client ?? http.Client() {
     final host = dotenv.env['API_HOST'] ?? 'localhost';
     final port = dotenv.env['API_PORT'] ?? '4000';
     baseUrl = 'http://$host:$port/api';
-    if (kDebugMode) {
-      print('🌐 Habit API Base URL: $baseUrl');
-    }
   }
 
   void setAccessToken(String token) {
     _accessToken = token;
-    if (kDebugMode) {
-      print('🔐 HabitApiService: Access token set');
-    }
   }
 
   Map<String, String> get _headers => {
@@ -57,22 +36,12 @@ class HabitApiService {
     }
   }
 
-  /// GET /api/users/:id/habits - Get user habits
   Future<Map<String, dynamic>> getUserHabits(String userId) async {
     try {
-      // if (kDebugMode) print('📡 GET $baseUrl/users/$userId/habits');
-
-      final response = await sendWithAutoRefresh(
-        request: () =>
-            _client.get(Uri.parse('$baseUrl/me/habits'), headers: _headers),
-        authRepository: _authRepository,
-        updateAccessToken: (token) => _accessToken = token,
+      final response = await _client.get(
+        Uri.parse('$baseUrl/me/habits'),
+        headers: _headers,
       );
-
-      if (kDebugMode)
-        print('📡 Response status for get user habits: ${response.statusCode}');
-
-      print(response.body);
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -87,21 +56,12 @@ class HabitApiService {
     }
   }
 
-  /// GET /api/habits/:id - Get habit detail
   Future<Map<String, dynamic>> getHabitDetail(int habitId) async {
     try {
-      if (kDebugMode) print('📡 GET $baseUrl/habits/$habitId');
-
-      final response = await sendWithAutoRefresh(
-        request: () => _client.get(
-          Uri.parse('$baseUrl/habits/$habitId'),
-          headers: _headers,
-        ),
-        authRepository: _authRepository,
-        updateAccessToken: (token) => _accessToken = token,
+      final response = await _client.get(
+        Uri.parse('$baseUrl/habits/$habitId'),
+        headers: _headers,
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -123,22 +83,12 @@ class HabitApiService {
     }
   }
 
-  /// GET /api/habits/:id/reminder-settings - Get habit reminder settings
   Future<Map<String, dynamic>> getHabitReminderSettings(int habitId) async {
     try {
-      if (kDebugMode)
-        print('📡 GET $baseUrl/habits/$habitId/reminder-settings');
-
-      final response = await sendWithAutoRefresh(
-        request: () => _client.get(
-          Uri.parse('$baseUrl/habits/$habitId/reminder-settings'),
-          headers: _headers,
-        ),
-        authRepository: _authRepository,
-        updateAccessToken: (token) => _accessToken = token,
+      final response = await _client.get(
+        Uri.parse('$baseUrl/habits/$habitId/reminder-settings'),
+        headers: _headers,
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -160,7 +110,6 @@ class HabitApiService {
     }
   }
 
-  /// POST /api/habits - Create habit
   Future<Map<String, dynamic>> createHabit(HabitModel habit) async {
     try {
       final body = {
@@ -181,16 +130,11 @@ class HabitApiService {
         if (habit.radius != null) 'radius': habit.radius,
       };
 
-      if (kDebugMode) print('📡 POST $baseUrl/habits');
-      if (kDebugMode) print('📡 Body: $body');
-
       final response = await _client.post(
         Uri.parse('$baseUrl/habits'),
         headers: _headers,
         body: jsonEncode(body),
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 201) {
         return jsonDecode(response.body);
@@ -207,7 +151,6 @@ class HabitApiService {
     }
   }
 
-  /// PATCH /api/habits - Update habit
   Future<Map<String, dynamic>> updateHabit(
     int habitId,
     Map<String, dynamic> updates,
@@ -215,16 +158,11 @@ class HabitApiService {
     try {
       final body = {'id': habitId, ...updates};
 
-      if (kDebugMode) print('📡 PATCH $baseUrl/habits');
-      if (kDebugMode) print('📡 Body: $body');
-
       final response = await _client.patch(
         Uri.parse('$baseUrl/habits'),
         headers: _headers,
         body: jsonEncode(body),
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -245,19 +183,13 @@ class HabitApiService {
     }
   }
 
-  /// DELETE /api/habits - Delete habit
   Future<Map<String, dynamic>> deleteHabit(int habitId) async {
     try {
-      if (kDebugMode) print('📡 DELETE $baseUrl/habits');
-      if (kDebugMode) print('📡 Body: {"id": $habitId}');
-
       final response = await _client.delete(
         Uri.parse('$baseUrl/habits'),
         headers: _headers,
         body: jsonEncode({'id': habitId}),
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -278,15 +210,12 @@ class HabitApiService {
     }
   }
 
-  /// PATCH /api/habits/:id/logs - Toggle daily habit log
   Future<Map<String, dynamic>> toggleHabitLog(
     int habitId, {
     double? currentLat,
     double? currentLong,
   }) async {
     try {
-      if (kDebugMode) print('📡 PATCH $baseUrl/habits/$habitId/logs');
-
       final body = {
         if (currentLat != null) 'currentLat': currentLat,
         if (currentLong != null) 'currentLong': currentLong,
@@ -297,7 +226,6 @@ class HabitApiService {
         headers: _headers,
         body: jsonEncode(body),
       );
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -314,19 +242,12 @@ class HabitApiService {
     }
   }
 
-  // ==================== CATEGORY ENDPOINTS ====================
-
-  /// GET /api/users/:id/categories - Get user categories
   Future<Map<String, dynamic>> getUserCategories(String userId) async {
     try {
-      if (kDebugMode) print('📡 GET $baseUrl/users/$userId/categories');
-
       final response = await _client.get(
         Uri.parse('$baseUrl/users/$userId/categories'),
         headers: _headers,
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -346,7 +267,6 @@ class HabitApiService {
     }
   }
 
-  /// POST /api/categories - Create category
   Future<Map<String, dynamic>> createCategory(
     String name, {
     String? description,
@@ -358,16 +278,11 @@ class HabitApiService {
           'description': description,
       };
 
-      if (kDebugMode) print('📡 POST $baseUrl/categories');
-      if (kDebugMode) print('📡 Body: $body');
-
       final response = await _client.post(
         Uri.parse('$baseUrl/categories'),
         headers: _headers,
         body: jsonEncode(body),
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 201) {
         return jsonDecode(response.body);
@@ -384,7 +299,6 @@ class HabitApiService {
     }
   }
 
-  /// PATCH /api/categories - Update category
   Future<Map<String, dynamic>> updateCategory(
     int id, {
     String? name,
@@ -398,16 +312,11 @@ class HabitApiService {
           'description': description,
       };
 
-      if (kDebugMode) print('📡 PATCH $baseUrl/categories');
-      if (kDebugMode) print('📡 Body: $body');
-
       final response = await _client.patch(
         Uri.parse('$baseUrl/categories'),
         headers: _headers,
         body: jsonEncode(body),
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -426,19 +335,13 @@ class HabitApiService {
     }
   }
 
-  /// DELETE /api/categories - Delete category
   Future<Map<String, dynamic>> deleteCategory(int id) async {
     try {
-      if (kDebugMode) print('📡 DELETE $baseUrl/categories');
-      if (kDebugMode) print('📡 Body: {"id": $id}');
-
       final response = await _client.delete(
         Uri.parse('$baseUrl/categories'),
         headers: _headers,
         body: jsonEncode({'id': id}),
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -457,19 +360,12 @@ class HabitApiService {
     }
   }
 
-  // ==================== UNIT ENDPOINTS ====================
-
-  /// GET /api/units - Get all units
   Future<Map<String, dynamic>> getUnits() async {
     try {
-      if (kDebugMode) print('📡 GET $baseUrl/units');
-
       final response = await _client.get(
         Uri.parse('$baseUrl/units'),
         headers: _headers,
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -486,17 +382,12 @@ class HabitApiService {
 
   Future<Map<String, dynamic>> getHabitLogs({required int habitId}) async {
     try {
-      if (kDebugMode) print('📡 GET $baseUrl/habits/$habitId/logs');
-
       final response = await _client.get(
         Uri.parse('$baseUrl/habits/$habitId/logs'),
         headers: _headers,
       );
 
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
-
       if (response.statusCode == 200) {
-        print(response.body);
         return jsonDecode(response.body);
       } else if (response.statusCode == 401) {
         throw AuthException('Unauthorized. Please login again.');

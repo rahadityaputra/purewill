@@ -86,8 +86,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       _showSnackBar("Password and confirmation do not match!", isError: true);
       return;
     }
-
-    // Validasi birth date
     if (_selectedBirthDate == null) {
       _showSnackBar("Please select your birth date!", isError: true);
       return;
@@ -168,7 +166,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               padding: EdgeInsets.all(screenWidth * 0.06),
               child: Column(
                 children: [
-                  Container(
+                  SizedBox(
                     height: screenHeight * 0.20,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -225,11 +223,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           width: double.infinity,
                           padding: EdgeInsets.all(screenWidth * 0.05),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.95),
+                            color: Colors.white.withValues(alpha: 0.95),
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -262,8 +260,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               ),
 
                               const SizedBox(height: 20),
-
-                              // Full Name Field
                               _buildTextField(
                                 controller: _fullNameController,
                                 hintText: "Full Name",
@@ -280,8 +276,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               ),
 
                               const SizedBox(height: 12),
-
-                              // Username Field
                               _buildTextField(
                                 controller: _usernameController,
                                 hintText: "Username",
@@ -298,8 +292,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               ),
 
                               const SizedBox(height: 12),
-
-                              // Email Field
                               _buildTextField(
                                 controller: _emailController,
                                 hintText: "Email Address",
@@ -317,8 +309,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               ),
 
                               const SizedBox(height: 12),
-
-                              // Gender Dropdown
                               Container(
                                 height: 45,
                                 decoration: BoxDecoration(
@@ -383,8 +373,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               ),
 
                               const SizedBox(height: 12),
-
-                              // Birth Date Picker
                               GestureDetector(
                                 onTap: _selectBirthDate,
                                 child: Container(
@@ -431,8 +419,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               ),
 
                               const SizedBox(height: 12),
-
-                              // Password Field
                               _buildTextField(
                                 controller: _passwordController,
                                 hintText: "Password",
@@ -455,8 +441,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               ),
 
                               const SizedBox(height: 12),
-
-                              // Confirm Password Field
                               _buildTextField(
                                 controller: _confirmPasswordController,
                                 hintText: "Confirm Password",

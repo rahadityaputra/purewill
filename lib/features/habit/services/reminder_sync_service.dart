@@ -1,8 +1,8 @@
-// lib/data/services/reminder_sync_service.dart
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:purewill/features/auth/services/auth_repository.dart';
+import 'package:http/http.dart' as http;
+import 'package:purewill/features/auth/services/auth_refresh_client.dart';
 import 'package:purewill/features/auth/services/auth_service.dart';
 import 'package:purewill/features/habit/services/habit_api_service.dart';
 import 'package:purewill/features/habit/services/local_notification_service.dart';
@@ -19,19 +19,29 @@ class ReminderSyncService {
       LocalNotificationService();
   late final ReminderApiService _reminderApiService;
   late final HabitApiService _habitApiService;
-  late final AuthRepository _authRepository;
+  late final AuthService _authService;
+  late final http.Client _httpClient;
 
   StreamSubscription? _reminderSubscription;
 
-  Future<void> initialize() async {
-    final authService = AuthService();
-    _authRepository = AuthRepository(authService);
-    _reminderApiService = ReminderApiService(authRepository: _authRepository);
-    _habitApiService = HabitApiService(authRepository: _authRepository);
+  Future<void> initialize({AuthService? authService, http.Client? httpClient}) async {
+    _authService = authService ?? AuthService();
+
+    _httpClient = httpClient ?? AuthRefreshClient(
+      http.Client(),
+      _authService,
+      onTokenRefreshed: (token) {
+        _habitApiService.setAccessToken(token);
+        _reminderApiService.setAccessToken(token);
+      },
+      onTokenExpired: () async {
+        await _authService.clearSessionTokens();
+      },
+    );
+    _reminderApiService = ReminderApiService(client: _httpClient);
+    _habitApiService = HabitApiService(client: _httpClient);
 
     await _restoreAuthAndSyncTokens();
-    // Schedule reschedule as backup (non-blocking) after delay
-    // This ensures all dependencies are ready and UI scheduling takes priority
     Future.delayed(const Duration(milliseconds: 500), () {
       rescheduleAllReminders();
     }).ignore();
@@ -39,11 +49,8 @@ class ReminderSyncService {
 
   Future<void> _restoreAuthAndSyncTokens() async {
     try {
-      // Require biometric verification on cold startup before using
-      // the refresh endpoint so the app doesn't refresh automatically
-      // when reopened while locked.
-      await _authRepository.restoreSession(requireBiometric: true);
-      final token = _authRepository.accessToken;
+      await _authService.restoreSession(requireBiometric: true);
+      final token = _authService.accessToken;
       if (token == null || token.isEmpty) {
         debugPrint('ℹ️ Reminder sync skipped: no stored auth token');
         return;
@@ -56,16 +63,12 @@ class ReminderSyncService {
       debugPrint('⚠️ Failed to restore auth for reminder sync: $e');
     }
   }
-
-  // Reschedule all reminders from database (backup mechanism only)
   Future<void> rescheduleAllReminders() async {
     try {
       debugPrint('🔄 [BACKUP] Rescheduling all reminders from database...');
-
-      // Cancel all existing notifications first
       await _notificationService.cancelAllNotifications();
 
-      final token = _authRepository.accessToken;
+      final token = _authService.accessToken;
       if (token == null || token.isEmpty) {
         debugPrint('ℹ️ [BACKUP] No auth token; skipping reschedule');
         return;
@@ -128,10 +131,10 @@ class ReminderSyncService {
     final reminderSeed = reminderId.hashCode.abs() % 10000;
     return habitId * 10000 + reminderSeed;
   }
-
-  // Cleanup
   Future<void> dispose() async {
     await _reminderSubscription?.cancel();
+    _httpClient.close();
+    _authService.dispose();
     debugPrint('🛑 Reminder sync service disposed');
   }
 }

@@ -130,3 +130,12 @@ class AuthException implements Exception {
   @override
   String toString() => formattedMessage;
 }
+
+class TokenExpiredException implements Exception {
+  final String message;
+
+  TokenExpiredException(this.message);
+
+  @override
+  String toString() => message;
+}

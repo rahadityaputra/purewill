@@ -20,7 +20,6 @@ class ValueEarnedWidget extends StatefulWidget {
 }
 
 class _ValueEarnedWidgetState extends State<ValueEarnedWidget> {
-  // 3 currencies: IDR (default), USD, EUR
   static const List<String> displayCurrencies = ['IDR', 'USD', 'EUR'];
 
   late String _selectedCurrency;
@@ -83,9 +82,12 @@ class _ValueEarnedWidgetState extends State<ValueEarnedWidget> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: widget.habitColor.withOpacity(0.08),
+        color: widget.habitColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: widget.habitColor.withOpacity(0.2), width: 1),
+        border: Border.all(
+          color: widget.habitColor.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,14 +103,13 @@ class _ValueEarnedWidgetState extends State<ValueEarnedWidget> {
                   color: Colors.black87,
                 ),
               ),
-              // Currency Dropdown
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: widget.habitColor.withOpacity(0.1),
+                  color: widget.habitColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: widget.habitColor.withOpacity(0.2),
+                    color: widget.habitColor.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
@@ -116,17 +117,19 @@ class _ValueEarnedWidgetState extends State<ValueEarnedWidget> {
                   value: _selectedCurrency,
                   underline: const SizedBox.shrink(),
                   items: displayCurrencies
-                      .map((currency) => DropdownMenuItem(
-                            value: currency,
-                            child: Text(
-                              currency,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: widget.habitColor,
-                              ),
+                      .map(
+                        (currency) => DropdownMenuItem(
+                          value: currency,
+                          child: Text(
+                            currency,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: widget.habitColor,
                             ),
-                          ))
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (value) {
                     if (value != null) {
@@ -153,7 +156,7 @@ class _ValueEarnedWidgetState extends State<ValueEarnedWidget> {
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation(
-                          widget.habitColor.withOpacity(0.7),
+                          widget.habitColor.withValues(alpha: 0.7),
                         ),
                       ),
                     ),
@@ -164,10 +167,7 @@ class _ValueEarnedWidgetState extends State<ValueEarnedWidget> {
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Text(
                     'Failed to load exchange rates',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.red.shade400,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.red.shade400),
                   ),
                 );
               } else if (snapshot.hasData) {
@@ -178,10 +178,10 @@ class _ValueEarnedWidgetState extends State<ValueEarnedWidget> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: widget.habitColor.withOpacity(0.05),
+                        color: widget.habitColor.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: widget.habitColor.withOpacity(0.1),
+                          color: widget.habitColor.withValues(alpha: 0.1),
                           width: 1,
                         ),
                       ),

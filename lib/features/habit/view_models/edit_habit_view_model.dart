@@ -11,6 +11,10 @@ class EditHabitViewModel extends StateNotifier<HabitsState> {
   EditHabitViewModel(this._habitApiService, this._meApiService)
     : super(HabitsState());
 
+  void reset() {
+    state = HabitsState();
+  }
+
   Future<void> loadCategories() async {
     state = state.copyWith(status: HabitStatus.loading, errorMessage: null);
 
@@ -45,7 +49,6 @@ class EditHabitViewModel extends StateNotifier<HabitsState> {
 
     try {
       await _habitApiService.updateHabit(habitId, updates);
-      // Optionally refresh categories or other related state here
       state = state.copyWith(status: HabitStatus.success, errorMessage: null);
     } catch (e) {
       state = state.copyWith(

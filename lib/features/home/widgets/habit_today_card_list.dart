@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:purewill/features/habit/models/category_model.dart';
 import 'package:purewill/features/habit/models/habit_log_model.dart';
 import 'package:purewill/features/habit/models/habit_model.dart';
 import 'package:purewill/features/habit/view_models/habit_view_model.dart';
@@ -53,18 +54,21 @@ class HabitTodayCardList extends StatelessWidget {
           children: userHabits.map((habit) {
             final todayLogStatus = _resolveTodayLogStatus(habit);
             final categoryName = _determineCategory(habit);
-            final iconData = HabitIconHelper.getHabitIcon(categoryName);
             final color = HabitIconHelper.getHabitColor(categoryName);
+            final category =
+                habit.category ??
+                CategoryModel(
+                  id: 0,
+                  name: categoryName,
+                  color: null,
+                  createdAt: DateTime.now(),
+                );
 
             return HabitCard(
-              icon: iconData,
               title: habit.name,
-              subtitle: _buildHabitSubtitle(habit),
               color: color,
-              progress: todayLogStatus == TodayLogStatus.success ? 1.0 : 0.0,
               status: todayLogStatus,
-              category: categoryName,
-              isDefault: habit.isDefault,
+              category: category,
               onTap: () => onHabitTap(habit),
               onCheckboxTap: () => onCheckboxTap(habit),
             );
@@ -92,7 +96,7 @@ class HabitTodayCardList extends StatelessWidget {
   String _determineCategory(HabitModel habit) {
     final categoryId = habit.category?.id;
     if (categoryId != null) {
-      final categoryName = _mapCategoryIdToName(categoryId);
+      final categoryName = habit.category!.name;
       return categoryName;
     }
 
@@ -100,37 +104,10 @@ class HabitTodayCardList extends StatelessWidget {
     return categoryFromName;
   }
 
-  String _mapCategoryIdToName(int categoryId) {
-    switch (categoryId) {
-      case 1:
-        return "Health & Fitness";
-      case 2:
-        return "Learning & Education";
-      case 3:
-        return "Productivity";
-      case 4:
-        return "Mindfulness & Mental Health";
-      case 5:
-        return "Personal Care";
-      case 6:
-        return "Social & Relationships";
-      case 7:
-        return "Finance";
-      case 8:
-        return "Hobbies & Creativity";
-      case 9:
-        return "Work & Career";
-      case 10:
-        return "Other";
-      default:
-        return "Other";
-    }
-  }
-
   Widget _defaultErrorState(String message) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.white.withOpacity(0.9),
+      color: Colors.white.withValues(alpha: 0.9),
       borderRadius: BorderRadius.circular(16),
     ),
     child: Column(
@@ -160,7 +137,7 @@ class HabitTodayCardList extends StatelessWidget {
     width: double.infinity,
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.white.withOpacity(0.9),
+      color: Colors.white.withValues(alpha: 0.9),
       borderRadius: BorderRadius.circular(16),
     ),
     child: Column(
@@ -186,14 +163,4 @@ class HabitTodayCardList extends StatelessWidget {
       ],
     ),
   );
-
-  String _buildHabitSubtitle(HabitModel habit) {
-    if (habit.targetValue != null) {
-      if (habit.unit != null && habit.unit!.isNotEmpty) {
-        return '${habit.targetValue} ${habit.unit}';
-      }
-      return '${habit.targetValue}';
-    }
-    return 'Daily habit';
-  }
 }

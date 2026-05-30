@@ -3,41 +3,23 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart' as p;
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:purewill/features/auth/services/auth_repository.dart';
 import 'package:purewill/features/auth/models/auth_model.dart';
-import 'package:purewill/features/auth/services/auth_refresh_client.dart';
 
 class MeApiService {
   late final String baseUrl;
   String? _accessToken;
   late final http.Client _client;
 
-  MeApiService({http.Client? client, AuthRepository? authRepository}) {
-    _client = authRepository != null
-        ? AuthRefreshClient(
-            client ?? http.Client(),
-            authRepository,
-            onTokenRefreshed: (token) {
-              _accessToken = token;
-            },
-          )
-        : (client ?? http.Client());
+  MeApiService({http.Client? client}) {
+    _client = client ?? http.Client();
     final host = dotenv.env['API_HOST'] ?? 'localhost';
     final port = dotenv.env['API_PORT'] ?? '4000';
     baseUrl = 'http://$host:$port/api';
-
-    if (kDebugMode) {
-      print('🌐 Me API Base URL: $baseUrl');
-    }
   }
 
   void setAccessToken(String token) {
     _accessToken = token;
-    if (kDebugMode) {
-      print('🔐 MeApiService: Access token set');
-    }
   }
 
   Map<String, String> get _headers => {
@@ -57,17 +39,12 @@ class MeApiService {
     }
   }
 
-  /// GET /api/me - Get current user profile
   Future<Map<String, dynamic>> getMe() async {
     try {
-      if (kDebugMode) print('📡 GET $baseUrl/me');
-
       final response = await _client.get(
         Uri.parse('$baseUrl/me'),
         headers: _headers,
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -84,18 +61,13 @@ class MeApiService {
     }
   }
 
-  /// GET /api/me/habits - Get current user's habits (optional date filter)
   Future<Map<String, dynamic>> getMeHabits({String? date}) async {
     try {
       final uri = Uri.parse('$baseUrl/me/habits').replace(
         queryParameters: {if (date != null && date.isNotEmpty) 'date': date},
       );
 
-      if (kDebugMode) print('📡 GET $uri');
-
       final response = await _client.get(uri, headers: _headers);
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -112,17 +84,12 @@ class MeApiService {
     }
   }
 
-  /// GET /api/me/categories - Get current user's categories
   Future<Map<String, dynamic>> getMeCategories() async {
     try {
-      if (kDebugMode) print('📡 GET $baseUrl/me/categories');
-
       final response = await _client.get(
         Uri.parse('$baseUrl/me/categories'),
         headers: _headers,
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -139,17 +106,12 @@ class MeApiService {
     }
   }
 
-  /// GET /api/me/units - Get available units
   Future<Map<String, dynamic>> getUnits() async {
     try {
-      if (kDebugMode) print('📡 GET $baseUrl/me/units');
-
       final response = await _client.get(
         Uri.parse('$baseUrl/me/units'),
         headers: _headers,
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -166,17 +128,12 @@ class MeApiService {
     }
   }
 
-  /// GET /api/me/nofap-sessions - Get current user's nofap session
   Future<Map<String, dynamic>> getMeNofapSessions() async {
     try {
-      if (kDebugMode) print('📡 GET $baseUrl/me/nofap-sessions');
-
       final response = await _client.get(
         Uri.parse('$baseUrl/me/nofap-sessions'),
         headers: _headers,
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -196,28 +153,18 @@ class MeApiService {
     }
   }
 
-  /// PATCH /api/me - Update current user
   Future<Map<String, dynamic>> updateMe(Map<String, dynamic> updates) async {
     try {
-      if (kDebugMode) print('📡 PATCH $baseUrl/me');
-
       final uri = Uri.parse('$baseUrl/me');
       final request = http.MultipartRequest('PATCH', uri);
-
-      // 1. Tambahkan Headers
       if (_accessToken != null) {
         request.headers['Authorization'] = 'Bearer $_accessToken';
       }
-      // Content-Type tidak perlu disetel manual untuk MultipartRequest
-
-      // 2. Iterasi data updates
       for (final entry in updates.entries) {
         final key = entry.key;
         final value = entry.value;
 
         if (value == null) continue;
-
-        // CEK JIKA VALUE ADALAH FILE (Avatar)
         if (value is File ||
             (key == 'avatar' && value is String && value.contains('/'))) {
           File file;
@@ -228,7 +175,6 @@ class MeApiService {
           }
 
           if (await file.exists()) {
-            // Ambil ekstensi file untuk menentukan MediaType
             final extension = p
                 .extension(file.path)
                 .toLowerCase()
@@ -241,28 +187,17 @@ class MeApiService {
               contentType: MediaType('image', mimeType),
             );
             request.files.add(multipartFile);
-
-            if (kDebugMode) print('📎 Attached file: ${file.path}');
-            continue; // Lanjut ke loop berikutnya, jangan eksekusi request.fields
+            continue;
           }
         }
-
-        // 3. Penanganan Field Teks Biasa
         if (value is String) {
           request.fields[key] = value;
         } else {
           request.fields[key] = value.toString();
         }
       }
-
-      // 4. Kirim Request
       final streamed = await _client.send(request);
       final response = await http.Response.fromStream(streamed);
-
-      if (kDebugMode) {
-        print('📡 Response status: ${response.statusCode}');
-        print('📡 Response body: ${response.body}');
-      }
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -274,23 +209,17 @@ class MeApiService {
         );
       }
     } catch (e) {
-      if (kDebugMode) print('❌ Error in updateMe: $e');
       if (e is AuthException) rethrow;
       throw AuthException('Network error: $e');
     }
   }
 
-  /// DELETE /api/me - Soft delete current user
   Future<Map<String, dynamic>> deleteMe() async {
     try {
-      if (kDebugMode) print('📡 DELETE $baseUrl/me');
-
       final response = await _client.delete(
         Uri.parse('$baseUrl/me'),
         headers: _headers,
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);

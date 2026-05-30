@@ -18,13 +18,19 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
     final authState = ref.watch(authNotifierProvider);
     final currentUser = authState.user;
 
+    debugPrint(
+      '🔵 [AuthWrapper] Rebuilding - Status: ${authState.status}, User: ${currentUser?.email ?? "null"}',
+    );
+
     if (authState.status == AuthStatus.loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (currentUser != null) {
+      debugPrint('✅ [AuthWrapper] User logged in, showing HomeScreen');
       return const HomeScreen();
     } else {
+      debugPrint('🔴 [AuthWrapper] User not logged in, showing LoginScreen');
       return const LoginScreen();
     }
   }

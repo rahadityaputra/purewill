@@ -1,33 +1,15 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import 'package:purewill/features/auth/services/auth_repository.dart';
-import 'package:purewill/features/auth/services/auth_refresh_client.dart';
 import 'package:purewill/features/auth/models/auth_model.dart';
 
 class NofapSessionApiService {
-  NofapSessionApiService({
-    http.Client? client,
-    AuthRepository? authRepository,
-  }) {
-    _client = authRepository != null
-        ? AuthRefreshClient(
-            client ?? http.Client(),
-            authRepository,
-            onTokenRefreshed: (token) {
-              _accessToken = token;
-            },
-          )
-        : (client ?? http.Client());
+  NofapSessionApiService({http.Client? client})
+    : _client = client ?? http.Client() {
     final host = dotenv.env['API_HOST'] ?? 'localhost';
     final port = dotenv.env['API_PORT'] ?? '4000';
     baseUrl = 'http://$host:$port/api';
-
-    if (kDebugMode) {
-      print('🌐 Nofap Session API Base URL: $baseUrl');
-    }
   }
 
   late final String baseUrl;
@@ -163,8 +145,6 @@ class NofapSessionApiService {
     );
   }
 
-  /// Stops the current nofap session.
-  /// `relapseNote` is required and will be sent to the API as `relapseNote`.
   Future<Map<String, dynamic>> stopCurrentSession({
     required String relapseNote,
     DateTime? endDate,

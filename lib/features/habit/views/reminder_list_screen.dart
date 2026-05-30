@@ -8,6 +8,7 @@ import 'package:purewill/features/habit/views/add_reminder_screen.dart';
 import 'package:purewill/features/habit/views/update_reminder_screen.dart';
 import 'package:purewill/features/habit/providers/habit_provider.dart';
 import 'package:purewill/core/widgets/primary_action_button.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
 
 class ReminderListScreen extends ConsumerStatefulWidget {
   final HabitModel habit;
@@ -93,11 +94,7 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reminders'),
-        backgroundColor: Colors.blue[50],
-        foregroundColor: Colors.blue[800],
-      ),
+      appBar: const ConsistentAppBar(title: 'Reminders'),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await Navigator.push(
@@ -110,8 +107,8 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
         },
         child: const Icon(Icons.add),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+        body: _isLoading
+          ? const AppLoadingView()
           : Padding(
               padding: const EdgeInsets.all(16),
               child: _settings.isEmpty
@@ -167,7 +164,6 @@ class _ReminderListScreenState extends ConsumerState<ReminderListScreen> {
                 Switch(
                   value: setting.isEnabled,
                   onChanged: (v) async {
-                    // toggle enabled via update
                     final reminderId = int.tryParse(setting.id);
                     if (reminderId == null) return;
                     await _repository.updateReminderSetting(

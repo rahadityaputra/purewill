@@ -1,11 +1,10 @@
-// lib/domain/model/target_unit_model.dart
 
 class TargetUnitModel {
   final int id;
   final String name;
-  final String? abbreviation;  // ✅ TAMBAHKAN
+  final String? abbreviation;  
   final DateTime createdAt;
-  final DateTime? updatedAt;    // ✅ TAMBAHKAN
+  final DateTime? updatedAt;    
 
   TargetUnitModel({
     required this.id,

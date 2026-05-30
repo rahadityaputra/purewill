@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purewill/features/habit/models/habit_log_model.dart';
@@ -15,6 +17,7 @@ import 'package:purewill/features/habit/widgets/habit_detail_explanation_widget.
 import 'package:purewill/features/habit/widgets/progress_widget.dart';
 import 'package:purewill/features/habit/widgets/value_earned_widget.dart';
 import 'package:purewill/features/habit/widgets/weekly_streak_widget.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
 
 class HabitDetailScreen extends ConsumerStatefulWidget {
   final HabitModel habit;
@@ -48,79 +51,70 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
     final habit = habitDetailState.currentHabitDetail ?? widget.habit;
     final habitName = habit.name;
     final iconColor = HabitIconHelper.getHabitColor(habit.name);
-    final headerColor = _resolveHeaderColor(habit);
-    final isHeaderDark =
-        ThemeData.estimateBrightnessForColor(headerColor) == Brightness.dark;
-    final headerForegroundColor = isHeaderDark ? Colors.white : Colors.black87;
 
     if (habitDetailState.status == HabitStatus.loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: AppLoadingView());
     }
 
-    return WillPopScope(
-      onWillPop: _handleWillPop,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.pop(context, _shouldRefreshParent);
+      },
       child: Scaffold(
-        backgroundColor: Colors.white,
-        body: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              backgroundColor: headerColor,
-              elevation: 0,
-              pinned: true,
-              expandedHeight: 140,
-              flexibleSpace: FlexibleSpaceBar(
-                background: _buildHeaderBackground(headerColor),
-                titlePadding: const EdgeInsets.only(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                ),
-                collapseMode: CollapseMode.pin,
-              ),
-              leading: IconButton(
-                icon: Icon(Icons.arrow_back, color: headerForegroundColor),
-                onPressed: () => Navigator.pop(context, _shouldRefreshParent),
-              ),
-              title: Text(
-                habitName,
-                style: TextStyle(
-                  color: headerForegroundColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              centerTitle: true,
-              actions: [
-                HabitActionsDropdown(
-                  iconColor: headerForegroundColor,
-                  onActionSelected: _handleMenuAction,
-                  habitName: habit.name,
-                  habit: habit,
-                ),
-              ],
+        appBar: ConsistentAppBar(
+          title: habitName,
+          actions: [
+            HabitActionsDropdown(
+              iconColor: Colors.black87,
+              onActionSelected: _handleMenuAction,
+              habitName: habit.name,
+              habit: habit,
             ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    HabitDetailExplanationWidget(
+          ],
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16),
+            ),
+          ),
+        ),
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/home/bg.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+                child: Container(color: Colors.black.withValues(alpha: 0.08)),
+              ),
+            ),
+            SafeArea(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  ConsistentSectionCard(
+                    child: HabitDetailExplanationWidget(
                       habit: habit,
                       habitColor: iconColor,
                     ),
-
-                    const SizedBox(height: 24),
-
-                    ValueEarnedWidget(
+                  ),
+                  const SizedBox(height: 16),
+                  ConsistentSectionCard(
+                    child: ValueEarnedWidget(
                       habit: habit,
                       habitLogs: habitDetailState.habitLogs,
                       habitColor: iconColor,
                     ),
-
-                    const SizedBox(height: 24),
-
-                    ProgressWidget(
+                  ),
+                  const SizedBox(height: 16),
+                  ConsistentSectionCard(
+                    child: ProgressWidget(
                       isCompleted: _isTodayCompleted(
                         habitDetailState.habitLogs,
                       ),
@@ -129,27 +123,28 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
                       completedDays: habitDetailState.completedDays,
                       totalDays: habitDetailState.possibleDays,
                     ),
-
-                    const SizedBox(height: 24),
-
-                    WeeklyStreakWidget(streak: habitDetailState.habitLogStreak),
-
-                    const SizedBox(height: 24),
-
-                    BestStreakWidget(
+                  ),
+                  const SizedBox(height: 16),
+                  ConsistentSectionCard(
+                    child: WeeklyStreakWidget(
+                      streak: habitDetailState.habitLogStreak,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ConsistentSectionCard(
+                    child: BestStreakWidget(
                       streak: habitDetailState.bestHabitLogStreak,
                     ),
-
-                    const SizedBox(height: 24),
-
-                    CalendarTrackerWidget(
+                  ),
+                  const SizedBox(height: 16),
+                  ConsistentSectionCard(
+                    child: CalendarTrackerWidget(
                       habitLogForThisMonth:
                           habitDetailState.habitLogForThisMonth,
                     ),
-
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
               ),
             ),
           ],
@@ -254,47 +249,6 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('Failed to delete habit: $e')));
     }
-  }
-
-  Future<bool> _handleWillPop() async {
-    Navigator.pop(context, _shouldRefreshParent);
-    return false;
-  }
-
-  Widget _buildHeaderBackground(Color headerColor) {
-    return Container(color: headerColor);
-  }
-
-  Color _resolveHeaderColor(HabitModel habit) {
-    final parsedCategoryColor = _parseCategoryColor(habit.category?.color);
-    if (parsedCategoryColor != null) {
-      return parsedCategoryColor;
-    }
-
-    final fallbackCategoryName =
-        habit.category?.name ?? HabitIconHelper.getHabitCategory(habit.name);
-    return HabitIconHelper.getHabitColor(fallbackCategoryName);
-  }
-
-  Color? _parseCategoryColor(String? rawColor) {
-    if (rawColor == null || rawColor.trim().isEmpty) {
-      return null;
-    }
-
-    var hex = rawColor.trim().replaceFirst('#', '');
-    if (hex.length == 6) {
-      hex = 'FF$hex';
-    }
-    if (hex.length != 8) {
-      return null;
-    }
-
-    final value = int.tryParse(hex, radix: 16);
-    if (value == null) {
-      return null;
-    }
-
-    return Color(value);
   }
 
   bool _isTodayCompleted(List<HabitLogModel> logs) {

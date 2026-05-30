@@ -15,82 +15,72 @@ class CategoryDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-      final uniqueCategories = <int, CategoryModel>{
-        for (final category in userCategories) category.id: category,
-      }.values.toList();
+    final uniqueCategories = <int, CategoryModel>{
+      for (final category in userCategories) category.id: category,
+    }.values.toList();
 
-      final hasSelectedCategory = selectedCategoryId != null &&
-          uniqueCategories.any((category) => category.id == selectedCategoryId);
-      final safeSelectedCategoryId = hasSelectedCategory ? selectedCategoryId : null;
+    final hasSelectedCategory =
+        selectedCategoryId != null &&
+        uniqueCategories.any((category) => category.id == selectedCategoryId);
+    final safeSelectedCategoryId = hasSelectedCategory
+        ? selectedCategoryId
+        : null;
 
-      if (uniqueCategories.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
+    if (uniqueCategories.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.orange),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'No categories available',
+              style: TextStyle(color: Colors.orange),
             ),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.orange),
-              borderRadius: BorderRadius.circular(12),
+            SizedBox(height: 4),
+            Text(
+              'You can still create a habit without category',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'No categories available',
-                  style: TextStyle(color: Colors.orange),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'You can still create a habit without category',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          );
-      }
-
-
-  
-
-        return DropdownButtonFormField<int>(
-          value: safeSelectedCategoryId,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-            hintText: 'Select a category',
-            filled: true,
-            fillColor: Colors.transparent,
-          ),
-          items: [
-            const DropdownMenuItem(
-              value: null,
-              child: Text(
-                'Select a category',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            ...uniqueCategories.map((category) {
-              return DropdownMenuItem(
-                value: category.id,
-                child: Text(
-                  category.name,
-                  style: const TextStyle(fontSize: 14),
-                ),
-              );
-            }).toList(),
           ],
-          onChanged: onChanged, 
-        );
-      }
-      
+        ),
+      );
+    }
+
+    return DropdownButtonFormField<int>(
+      initialValue: safeSelectedCategoryId,
+      decoration: InputDecoration(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+        hintText: 'Select a category',
+        filled: true,
+        fillColor: Colors.transparent,
+      ),
+      items: [
+        const DropdownMenuItem(
+          value: null,
+          child: Text(
+            'Select a category',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
+        ...uniqueCategories.map((category) {
+          return DropdownMenuItem(
+            value: category.id,
+            child: Text(category.name, style: const TextStyle(fontSize: 14)),
+          );
+        }),
+      ],
+      onChanged: onChanged,
+    );
+  }
 }

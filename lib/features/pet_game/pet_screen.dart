@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:purewill/features/home/views/home_screen.dart';
+import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'package:sensors_plus/sensors_plus.dart';
 
 class PetScreen extends StatefulWidget {
@@ -15,8 +16,6 @@ class PetScreen extends StatefulWidget {
 
 class _PetScreenState extends State<PetScreen> {
   final Random random = Random();
-
-  // ================= AUDIO =================
   AudioPlayer? _audioPlayer;
   final bool _isWeb = kIsWeb;
 
@@ -32,8 +31,6 @@ class _PetScreenState extends State<PetScreen> {
     'Sad': 'voice_pack/cat-sad.wav',
     'Shake': 'voice_pack/cat-shake.wav',
   };
-
-  // ================= WORLD =================
   double catX = 0;
   double cameraX = 0;
   double screenWidth = 0;
@@ -41,25 +38,17 @@ class _PetScreenState extends State<PetScreen> {
   double worldWidth = 0;
 
   bool moveRight = true;
-
-  // ================= GYROSCOPE =================
   StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
   double _gyroX = 0;
   bool _gyroEnabled = true;
   double _gyroSensitivity = 0.5;
   double _targetCameraX = 0;
   String _lastGyroAction = "";
-  
-  // ================= HOLD SYSTEM =================
   bool isHoldingCat = false;
   double holdOffsetY = 0;
-
-  // ================= CAMERA DRAG =================
   bool isDragging = false;
   double dragStartX = 0;
   double cameraStartX = 0;
-
-  // ================= ANIMATION =================
   int currentFrame = 0;
   List<String> frames = [];
   String currentAction = "Idle";
@@ -76,13 +65,9 @@ class _PetScreenState extends State<PetScreen> {
   };
 
   final List<String> randomActions = ["Idle", "Walk", "Run"];
-
-  // ================= STATE =================
   bool isDead = false;
   int hunger = 100;
   int mood = 100;
-
-  // ================= TIMER =================
   late Timer gameLoop;
   late Timer actionTimer;
   late Timer soundTimer;
@@ -100,8 +85,6 @@ class _PetScreenState extends State<PetScreen> {
       setState(() {
         if (!isDead && frames.isNotEmpty) {
           currentFrame = (currentFrame + 1) % frames.length;
-
-          // GERAK (disable saat dipegang)
           if (!isHoldingCat) {
             if (currentAction == "Walk") {
               catX += moveRight ? 3 : -3;
@@ -111,30 +94,23 @@ class _PetScreenState extends State<PetScreen> {
               catX += moveRight ? 8 : -8;
             }
           }
-
-          // GYROSCOPE CONTROL - Gerakkan kucing dengan animasi slide
           if (_gyroEnabled && !isDragging && !isHoldingCat && !isDead) {
-            // BALIKAN arah gyro (miring kanan = ke kanan)
             double gyroMove = -(_gyroX * _gyroSensitivity * 10);
-            
+
             if (gyroMove.abs() > 0.5) {
-              // Aktifkan animasi slide saat gyro bergerak
               if (_lastGyroAction != "Slide") {
                 loadFrames("Slide");
                 _lastGyroAction = "Slide";
                 _playRandomShortSound();
               }
-              
+
               catX += gyroMove;
-              
-              // Ubah arah berdasarkan gerakan gyro
               if (gyroMove > 0) {
                 moveRight = true;
               } else if (gyroMove < 0) {
                 moveRight = false;
               }
             } else {
-              // Kembali ke idle atau walk saat gyro berhenti
               if (_lastGyroAction == "Slide" && currentAction == "Slide") {
                 if (!isDead && mounted) {
                   loadFrames("Idle");
@@ -142,26 +118,22 @@ class _PetScreenState extends State<PetScreen> {
                 }
               }
             }
-            
-            // Batasi posisi
             catX = catX.clamp(0, worldWidth - 200);
-            
-            // Update target kamera
             _targetCameraX = catX - screenWidth / 2 + 100;
           }
-
-          // BATAS
           if (catX >= worldWidth - 200) {
             catX = worldWidth - 200;
             moveRight = false;
-            if (!isHoldingCat && currentAction != "Slide") _playRandomShortSound();
+            if (!isHoldingCat && currentAction != "Slide") {
+              _playRandomShortSound();
+            }
           } else if (catX <= 0) {
             catX = 0;
             moveRight = true;
-            if (!isHoldingCat && currentAction != "Slide") _playRandomShortSound();
+            if (!isHoldingCat && currentAction != "Slide") {
+              _playRandomShortSound();
+            }
           }
-
-          // CAMERA FOLLOW
           if (!isDragging) {
             if (_gyroEnabled && !isHoldingCat) {
               cameraX += (_targetCameraX - cameraX) * 0.15;
@@ -172,13 +144,9 @@ class _PetScreenState extends State<PetScreen> {
           }
 
           cameraX = cameraX.clamp(0, worldWidth - screenWidth);
-
-          // GRAVITY sederhana
           if (!isHoldingCat) {
             holdOffsetY = max(0, holdOffsetY - 10);
           }
-
-          // STATUS TURUN
           if (currentFrame % 10 == 0 && currentAction != "Slide") {
             hunger = max(0, hunger - 1);
             mood = max(0, mood - 1);
@@ -186,8 +154,6 @@ class _PetScreenState extends State<PetScreen> {
             hunger = max(0, hunger - 2);
             mood = max(0, mood - 1);
           }
-
-          // KONDISI
           if (hunger <= 0 && !isDead) {
             isDead = true;
             loadFrames("Dead");
@@ -201,9 +167,7 @@ class _PetScreenState extends State<PetScreen> {
               currentAction != "Slide") {
             loadFrames("Hurt");
             _playSpecialSound("Hurt");
-          } else if (hunger >= 30 &&
-              currentAction == "Hurt" &&
-              !isDead) {
+          } else if (hunger >= 30 && currentAction == "Hurt" && !isDead) {
             loadFrames("Idle");
           }
         }
@@ -221,19 +185,15 @@ class _PetScreenState extends State<PetScreen> {
     });
   }
 
-  // ================= GYROSCOPE INIT =================
   void _initGyroscope() {
     if (_isWeb) {
       _gyroEnabled = false;
       return;
     }
-    
+
     _accelerometerSubscription = accelerometerEventStream().listen(
       (AccelerometerEvent event) {
-        // BALIKAN arah dengan negatif (miring kanan = positif)
         _gyroX = -event.x.clamp(-2, 2).toDouble();
-        
-        // Deadzone
         if (_gyroX.abs() < 0.1) {
           _gyroX = 0;
         }
@@ -315,14 +275,10 @@ class _PetScreenState extends State<PetScreen> {
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 2),
-      ),
+      SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
     );
   }
 
-  // ================= AUDIO =================
   void _initAudio() {
     _audioPlayer = AudioPlayer();
     _audioPlayer?.setVolume(0.8);
@@ -356,7 +312,6 @@ class _PetScreenState extends State<PetScreen> {
     }
   }
 
-  // ================= LOGIC =================
   void loadFrames(String action) {
     if (actionMap.containsKey(action)) {
       frames = List.generate(
@@ -428,9 +383,11 @@ class _PetScreenState extends State<PetScreen> {
     await _accelerometerSubscription?.cancel();
     await _audioPlayer?.stop();
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-    );
+    if (!mounted) return;
+
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
   }
 
   @override
@@ -481,8 +438,10 @@ class _PetScreenState extends State<PetScreen> {
           if (isDragging && !isHoldingCat) {
             double delta = details.globalPosition.dx - dragStartX;
             setState(() {
-              cameraX = (cameraStartX - delta)
-                  .clamp(0, worldWidth - screenWidth);
+              cameraX = (cameraStartX - delta).clamp(
+                0,
+                worldWidth - screenWidth,
+              );
             });
           }
         },
@@ -500,7 +459,6 @@ class _PetScreenState extends State<PetScreen> {
         },
         child: Stack(
           children: [
-            // ================= BACKGROUND =================
             Positioned(
               left: -cameraX,
               top: 0,
@@ -511,8 +469,6 @@ class _PetScreenState extends State<PetScreen> {
                 fit: BoxFit.cover,
               ),
             ),
-
-            // ================= SLIDE TRAIL EFFECT =================
             if (currentAction == "Slide" && _gyroEnabled)
               Positioned(
                 bottom: catBottom + holdOffsetY - 10,
@@ -529,7 +485,7 @@ class _PetScreenState extends State<PetScreen> {
                         end: Alignment.centerRight,
                         colors: [
                           Colors.transparent,
-                          Colors.white.withOpacity(0.5),
+                          Colors.white.withValues(alpha: 0.5),
                           Colors.transparent,
                         ],
                       ),
@@ -538,8 +494,6 @@ class _PetScreenState extends State<PetScreen> {
                   ),
                 ),
               ),
-
-            // ================= SHADOW =================
             if (!isHoldingCat && holdOffsetY == 0 && currentAction != "Slide")
               Positioned(
                 bottom: catBottom - 10,
@@ -548,13 +502,11 @@ class _PetScreenState extends State<PetScreen> {
                   width: 120,
                   height: 20,
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(50),
                   ),
                 ),
               ),
-
-            // ================= CAT (DRAGGABLE) =================
             Positioned(
               bottom: catBottom + holdOffsetY,
               left: catX - cameraX,
@@ -584,7 +536,10 @@ class _PetScreenState extends State<PetScreen> {
                   });
 
                   Future.delayed(const Duration(milliseconds: 600), () {
-                    if (!isDead && mounted && !isHoldingCat && _lastGyroAction != "Slide") {
+                    if (!isDead &&
+                        mounted &&
+                        !isHoldingCat &&
+                        _lastGyroAction != "Slide") {
                       setState(() {
                         loadFrames("Idle");
                       });
@@ -594,9 +549,9 @@ class _PetScreenState extends State<PetScreen> {
                 child: Transform(
                   alignment: Alignment.center,
                   transform: Matrix4.identity()
-                    ..translate(100.0)
-                    ..scale(moveRight ? 1.0 : -1.0, 1.0)
-                    ..translate(-100.0),
+                    ..translateByVector3(Vector3(100.0, 0.0, 0.0))
+                    ..scaleByVector3(Vector3(moveRight ? 1.0 : -1.0, 1.0, 1.0))
+                    ..translateByVector3(Vector3(-100.0, 0.0, 0.0)),
                   child: Image.asset(
                     frames.isNotEmpty ? frames[currentFrame] : '',
                     width: 200,
@@ -606,18 +561,16 @@ class _PetScreenState extends State<PetScreen> {
                 ),
               ),
             ),
-
-            // ================= BACK BUTTON =================
             Positioned(
               top: 40,
               left: 20,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
+                      color: Colors.black.withValues(alpha: 0.3),
                       blurRadius: 5,
                       offset: const Offset(0, 2),
                     ),
@@ -630,18 +583,16 @@ class _PetScreenState extends State<PetScreen> {
                 ),
               ),
             ),
-
-            // ================= GYRO CONTROL BUTTON =================
             Positioned(
               top: 40,
               right: 20,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
+                      color: Colors.black.withValues(alpha: 0.3),
                       blurRadius: 5,
                       offset: const Offset(0, 2),
                     ),
@@ -666,8 +617,6 @@ class _PetScreenState extends State<PetScreen> {
                 ),
               ),
             ),
-
-            // ================= RESURRECT BUTTON =================
             if (isDead)
               Positioned(
                 top: 60,
@@ -684,8 +633,6 @@ class _PetScreenState extends State<PetScreen> {
                   ),
                 ),
               ),
-
-            // ================= UI (Hunger & Mood) =================
             Positioned(
               top: 40,
               left: 80,
@@ -694,7 +641,11 @@ class _PetScreenState extends State<PetScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.restaurant, color: Colors.white, size: 16),
+                      const Icon(
+                        Icons.restaurant,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         "Hunger: $hunger",
@@ -714,7 +665,11 @@ class _PetScreenState extends State<PetScreen> {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      const Icon(Icons.emoji_emotions, color: Colors.white, size: 16),
+                      const Icon(
+                        Icons.emoji_emotions,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         "Mood: $mood",
@@ -734,8 +689,6 @@ class _PetScreenState extends State<PetScreen> {
                 ],
               ),
             ),
-
-            // ================= ACTION BUTTONS =================
             Positioned(
               bottom: 30,
               left: 0,
@@ -787,8 +740,6 @@ class _PetScreenState extends State<PetScreen> {
                 ],
               ),
             ),
-
-            // ================= HINT TEXT =================
             Positioned(
               bottom: 100,
               left: 0,
@@ -800,11 +751,11 @@ class _PetScreenState extends State<PetScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    _gyroEnabled 
+                    _gyroEnabled
                         ? "🎮 TILT PHONE to slide! • Drag cat to lift • Double tap focus"
                         : "👉 Tap cat & drag • Drag bg for camera • Double tap focus",
                     style: const TextStyle(color: Colors.white70, fontSize: 10),
@@ -812,43 +763,43 @@ class _PetScreenState extends State<PetScreen> {
                 ),
               ),
             ),
-
-            // ================= GYRO ACTIVE INDICATOR =================
             if (_gyroEnabled && !isHoldingCat && !isDead)
               Positioned(
                 top: 100,
                 right: 20,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: currentAction == "Slide" 
-                        ? Colors.orange.withOpacity(0.9)
-                        : Colors.green.withOpacity(0.8),
+                    color: currentAction == "Slide"
+                        ? Colors.orange.withValues(alpha: 0.9)
+                        : Colors.green.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        currentAction == "Slide" 
-                            ? Icons.speed
-                            : Icons.sensors,
-                        color: Colors.white, 
+                        currentAction == "Slide" ? Icons.speed : Icons.sensors,
+                        color: Colors.white,
                         size: 14,
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        currentAction == "Slide" 
+                        currentAction == "Slide"
                             ? "SLIDING!"
                             : "Gyro: ${(_gyroX * _gyroSensitivity).toStringAsFixed(1)}",
-                        style: const TextStyle(color: Colors.white, fontSize: 10),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-
-            // ================= DRAG INDICATOR =================
             if (isHoldingCat)
               Positioned(
                 top: 20,
@@ -861,7 +812,7 @@ class _PetScreenState extends State<PetScreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.7),
+                      color: Colors.black.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(

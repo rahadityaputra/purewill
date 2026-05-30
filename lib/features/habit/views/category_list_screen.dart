@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purewill/features/habit/providers/category_unit_management_provider.dart';
 import 'package:purewill/features/habit/views/create_category_screen.dart';
 import 'package:purewill/features/habit/views/edit_category_screen.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
 
 class CategoryListScreen extends ConsumerWidget {
   const CategoryListScreen({super.key});
@@ -56,8 +57,8 @@ class CategoryListScreen extends ConsumerWidget {
     final vm = ref.read(categoryListViewModelProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Categories'),
+      appBar: ConsistentAppBar(
+        title: 'Categories',
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -94,18 +95,22 @@ class CategoryListScreen extends ConsumerWidget {
                   child: Builder(
                     builder: (context) {
                       if (vm.isLoading && vm.categories.isEmpty) {
-                        return const Center(child: CircularProgressIndicator());
+                        return const AppLoadingView();
                       }
                       if (vm.error != null && vm.categories.isEmpty) {
-                        return Center(child: Text(vm.error!));
+                        return AppEmptyState(
+                          icon: Icons.error_outline,
+                          title: 'Error loading categories',
+                          message: vm.error!,
+                          actionLabel: 'Retry',
+                          onAction: () => _refresh(ref),
+                        );
                       }
                       if (vm.filtered.isEmpty) {
-                        return ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: const [
-                            SizedBox(height: 120),
-                            Center(child: Text('No categories found')),
-                          ],
+                        return const AppEmptyState(
+                          icon: Icons.category_outlined,
+                          title: 'No categories found',
+                          message: 'Create a category to start organizing habits.',
                         );
                       }
                       return ListView.separated(

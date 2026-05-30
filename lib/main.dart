@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http show Client;
 import 'package:purewill/core/theme/app_theme.dart';
 import 'package:purewill/features/habit/services/local_notification_service.dart';
 import 'package:purewill/features/habit/services/reminder_sync_service.dart';
+import 'package:purewill/features/auth/services/auth_service.dart';
+import 'package:purewill/features/auth/services/auth_refresh_client.dart';
+import 'package:purewill/features/auth/services/auth_singleton.dart';
 import 'package:purewill/features/auth/services/auth_wrapper.dart';
 import 'package:purewill/features/home/views/home_screen.dart';
 import 'package:purewill/features/auth/views/login_screen.dart';
@@ -65,9 +69,24 @@ Future<void> _initializeReminderSyncService() async {
   int retryCount = 0;
   const maxRetries = 3;
 
+  final sharedAuth = AuthService();
+  final sharedClient = AuthRefreshClient(
+    http.Client(),
+    sharedAuth,
+    onTokenExpired: () async {
+      await sharedAuth.clearSessionTokens();
+    },
+  );
+
+  sharedAuthService = sharedAuth;
+  sharedHttpClient = sharedClient;
+
   while (!syncInitialized && retryCount < maxRetries) {
     try {
-      await ReminderSyncService().initialize();
+      await ReminderSyncService().initialize(
+        authService: sharedAuth,
+        httpClient: sharedClient,
+      );
       syncInitialized = true;
       debugPrint('✅ ReminderSyncService initialized successfully');
     } catch (e) {
@@ -91,7 +110,6 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // ref.watch(timezoneProvider);
     return MaterialApp(
       title: 'PureWill',
       theme: AppTheme.light(),

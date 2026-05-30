@@ -9,20 +9,22 @@ class HabitScreenCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String rawColor = habit.category?.color ?? "#9E9E9E"; 
-    final Color categoryColor = Color(int.parse(rawColor.replaceFirst('#', '0xFF')));
+    final String rawColor = habit.category?.color ?? "#9E9E9E";
+    final Color categoryColor = Color(
+      int.parse(rawColor.replaceFirst('#', '0xFF')),
+    );
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 10, left: 10, right: 10),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -30,21 +32,6 @@ class HabitScreenCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: categoryColor.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.auto_awesome, 
-                color: categoryColor,
-                size: 20,
-              ),
-            ),
-            
-            const SizedBox(width: 16),
-            
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +44,7 @@ class HabitScreenCard extends StatelessWidget {
                       color: Color(0xFF2D3142),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 6),
                   if (habit.category?.name != null)
                     Container(
@@ -66,7 +53,7 @@ class HabitScreenCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: categoryColor.withOpacity(0.1),
+                        color: categoryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
@@ -86,7 +73,7 @@ class HabitScreenCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: categoryColor.withOpacity(0.9),
+                              color: categoryColor.withValues(alpha: 0.9),
                             ),
                           ),
                         ],
@@ -95,11 +82,8 @@ class HabitScreenCard extends StatelessWidget {
                 ],
               ),
             ),
-            
-            Icon(
-              Icons.chevron_right_rounded,
-              color: Colors.grey.shade400,
-            ),
+
+            Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
           ],
         ),
       ),

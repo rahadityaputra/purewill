@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purewill/features/user/models/user_model.dart';
 import 'package:purewill/features/user/providers/profile_provider.dart';
 import 'package:purewill/core/utils/indonesia_timezone.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   final UserModel user;
@@ -90,8 +91,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
       if (picked == null) return;
       final file = File(picked.path);
-
-      // Validate file size (max 5MB)
       const maxBytes = 5 * 1024 * 1024;
       final fileSize = await file.length();
       if (fileSize > maxBytes) {
@@ -101,8 +100,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         );
         return;
       }
-
-      // Validate extension
       final allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
       final ext = picked.path.split('.').last.toLowerCase();
       if (!allowedExt.contains(ext)) {
@@ -140,9 +137,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final state = ref.watch(profileViewModelProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
+      appBar: const ConsistentAppBar(title: 'Edit Profile'),
       body: state.isLoading && state.user == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const AppLoadingView()
           : Padding(
               padding: const EdgeInsets.all(20),
               child: Form(
@@ -254,7 +251,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: _selectedGender,
+                      initialValue: _selectedGender,
                       decoration: const InputDecoration(
                         labelText: 'Gender (optional)',
                         border: OutlineInputBorder(),

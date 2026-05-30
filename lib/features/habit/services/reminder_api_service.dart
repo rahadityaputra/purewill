@@ -1,36 +1,21 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:purewill/features/auth/services/auth_repository.dart';
-import 'package:purewill/features/auth/services/auth_refresh_client.dart';
 
 class ReminderApiService {
   late final String baseUrl;
   String? _accessToken;
   late final http.Client _client;
 
-  ReminderApiService({http.Client? client, AuthRepository? authRepository}) {
-    _client = authRepository != null
-        ? AuthRefreshClient(
-            client ?? http.Client(),
-            authRepository,
-            onTokenRefreshed: (token) {
-              _accessToken = token;
-            },
-          )
-        : (client ?? http.Client());
+  ReminderApiService({http.Client? client})
+    : _client = client ?? http.Client() {
     final host = dotenv.env['API_HOST'] ?? 'localhost';
     final port = dotenv.env['API_PORT'] ?? '4000';
     baseUrl = 'http://$host:$port/api';
-    if (kDebugMode) {
-      print('🌐 Reminder API Base URL: $baseUrl');
-    }
   }
 
   void setAccessToken(String token) {
     _accessToken = token;
-    if (kDebugMode) print('🔐 ReminderApiService: Access token set');
   }
 
   Map<String, String> get _headers => {
@@ -81,15 +66,10 @@ class ReminderApiService {
     int habitId,
   ) async {
     try {
-      if (kDebugMode)
-        print('📡 GET $baseUrl/habits/$habitId/reminder-settings');
-
       final response = await _client.get(
         Uri.parse('$baseUrl/habits/$habitId/reminder-settings'),
         headers: _headers,
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return _extractDataList(response.body);
@@ -112,8 +92,6 @@ class ReminderApiService {
 
   Future<Map<String, dynamic>> getReminderSetting(int id) async {
     try {
-      if (kDebugMode) print('📡 GET $baseUrl/reminder-settings/$id');
-
       final response = await _client.get(
         Uri.parse('$baseUrl/reminder-settings/$id'),
         headers: _headers,
@@ -142,16 +120,11 @@ class ReminderApiService {
     Map<String, dynamic> body,
   ) async {
     try {
-      if (kDebugMode) print('📡 POST $baseUrl/reminder-settings');
-      if (kDebugMode) print('📡 Body: $body');
-
       final response = await _client.post(
         Uri.parse('$baseUrl/reminder-settings'),
         headers: _headers,
         body: jsonEncode(body),
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 201) {
         return _extractDataMap(response.body);
@@ -174,16 +147,11 @@ class ReminderApiService {
     Map<String, dynamic> updates,
   ) async {
     try {
-      if (kDebugMode) print('📡 PATCH $baseUrl/reminder-settings/$id');
-      if (kDebugMode) print('📡 Body: $updates');
-
       final response = await _client.patch(
         Uri.parse('$baseUrl/reminder-settings/$id'),
         headers: _headers,
         body: jsonEncode(updates),
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return _extractDataMap(response.body);
@@ -205,14 +173,10 @@ class ReminderApiService {
 
   Future<void> deleteReminderSetting(int id) async {
     try {
-      if (kDebugMode) print('📡 DELETE $baseUrl/reminder-settings/$id');
-
       final response = await _client.delete(
         Uri.parse('$baseUrl/reminder-settings/$id'),
         headers: _headers,
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return;

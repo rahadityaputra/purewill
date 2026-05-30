@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/legacy.dart';
+import 'dart:developer';
 import 'package:purewill/features/user/services/me_api_service.dart';
 import 'package:purewill/features/habit/services/motivation_service.dart';
 import 'package:purewill/features/nofap/services/nofap_session_api_service.dart';
@@ -135,6 +136,10 @@ class NofapViewModel extends StateNotifier<NofapState> {
   NofapViewModel(this._apiService, this._meApiService, this._motivationService)
     : super(const NofapState());
 
+  void reset() {
+    state = const NofapState();
+  }
+
   Future<void> loadCurrentSession() async {
     state = state.copyWith(status: NofapStatus.loading, errorMessage: null);
 
@@ -175,7 +180,7 @@ class NofapViewModel extends StateNotifier<NofapState> {
         clearCurrentSession: currentData == null,
       );
     } catch (e) {
-      print(e);
+      log('Failed to load nofap session', error: e);
       state = state.copyWith(
         status: NofapStatus.failure,
         errorMessage: e.toString(),

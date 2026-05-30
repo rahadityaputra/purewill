@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:developer';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -96,7 +97,7 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
         throw AuthException('Invalid profile data');
       }
       final user = _mapProfileResponse(data);
-      print(user);
+      log('Profile loaded: ${user.id}');
       state = state.copyWith(isLoading: false, errorMessage: null, user: user);
     } on AuthException catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.message);

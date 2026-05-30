@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:purewill/features/habit/models/habit_model.dart';
-import 'package:purewill/core/utils/indonesia_timezone.dart';
 import 'package:purewill/core/services/currency_conversion_service.dart';
+import 'package:purewill/core/utils/indonesia_timezone.dart';
 
-class HabitDetailExplanationWidget extends StatefulWidget {
+class HabitDetailExplanationWidget extends StatelessWidget {
   final HabitModel habit;
   final Color habitColor;
 
@@ -15,125 +15,129 @@ class HabitDetailExplanationWidget extends StatefulWidget {
   });
 
   @override
-  State<HabitDetailExplanationWidget> createState() =>
-      _HabitDetailExplanationWidgetState();
-}
-
-class _HabitDetailExplanationWidgetState
-    extends State<HabitDetailExplanationWidget> {
-  @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: widget.habitColor.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: widget.habitColor.withOpacity(0.2), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Notes / description
-          if (widget.habit.notes != null && widget.habit.notes!.isNotEmpty) ...[
-            const Text(
-              "Notes",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.black54,
-                letterSpacing: 0.5,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (habit.notes != null && habit.notes!.isNotEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: habitColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: habitColor.withValues(alpha: 0.18),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Notes',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black54,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      habit.notes!,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              widget.habit.notes!,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-
-          _buildDetailRow(
-            label: "Frequency",
-            value: _getFrequencyLabel(widget.habit.frequency),
-            color: widget.habitColor,
-          ),
-          const SizedBox(height: 8),
-
-          // Target value and unit
-          if (widget.habit.targetValue != null &&
-              widget.habit.unit != null) ...[
+              const SizedBox(height: 12),
+            ],
             _buildDetailRow(
-              label: "Target",
-              value: "${widget.habit.targetValue} ${widget.habit.unit}",
-              color: widget.habitColor,
+              label: 'Frequency',
+              value: _getFrequencyLabel(habit.frequency),
+              color: habitColor,
             ),
-            const SizedBox(height: 8),
-          ],
-
-          // Value section
-          if (widget.habit.value != null && widget.habit.value! > 0) ...[
-            _buildDetailRow(
-              label: "Value",
-              value: CurrencyConversionService.formatCurrency(
-                'IDR',
-                widget.habit.value!.toStringAsFixed(0),
-              ),
-              color: widget.habitColor,
-              icon: Icons.attach_money,
-            ),
-            const SizedBox(height: 8),
-          ],
-
-          // Location information
-          if (widget.habit.isLocationLocked &&
-              widget.habit.locationName != null) ...[
-            _buildDetailRow(
-              label: "Location",
-              value: widget.habit.locationName!,
-              color: widget.habitColor,
-              icon: Icons.location_on,
-            ),
-            const SizedBox(height: 8),
-            if (widget.habit.radius != null)
+            if (habit.targetValue != null && habit.unit != null) ...[
+              const SizedBox(height: 10),
+              const Divider(height: 1),
+              const SizedBox(height: 10),
               _buildDetailRow(
-                label: "Radius",
-                value: "${widget.habit.radius} meter",
-                color: widget.habitColor,
-                icon: Icons.radar_outlined,
+                label: 'Target',
+                value: '${habit.targetValue} ${habit.unit}',
+                color: habitColor,
               ),
-            const SizedBox(height: 8),
-          ],
-
-          _buildDetailRow(
-            label: "Started",
-            value: _formatDate(widget.habit.startDate),
-            color: widget.habitColor,
-            icon: Icons.calendar_today,
-          ),
-
-          if (_shouldShowEndDate())
+            ],
+            if (habit.value != null && habit.value! > 0) ...[
+              const SizedBox(height: 10),
+              const Divider(height: 1),
+              const SizedBox(height: 10),
+              _buildDetailRow(
+                label: 'Value',
+                value: CurrencyConversionService.formatCurrency(
+                  'IDR',
+                  habit.value!.toStringAsFixed(0),
+                ),
+                color: habitColor,
+                icon: Icons.attach_money,
+              ),
+            ],
+            if (habit.isLocationLocked && habit.locationName != null) ...[
+              const SizedBox(height: 10),
+              const Divider(height: 1),
+              const SizedBox(height: 10),
+              _buildDetailRow(
+                label: 'Location',
+                value: habit.locationName!,
+                color: habitColor,
+                icon: Icons.location_on,
+              ),
+              if (habit.radius != null) ...[
+                const SizedBox(height: 10),
+                _buildDetailRow(
+                  label: 'Radius',
+                  value: '${habit.radius} meter',
+                  color: habitColor,
+                  icon: Icons.radar_outlined,
+                ),
+              ],
+            ],
+            const SizedBox(height: 10),
+            const Divider(height: 1),
+            const SizedBox(height: 10),
             _buildDetailRow(
-              label: "End",
-              value: _formatDate(widget.habit.endDate!),
-              color: widget.habitColor,
+              label: 'Started',
+              value: _formatDate(habit.startDate),
+              color: habitColor,
               icon: Icons.calendar_today,
             ),
-
-          const SizedBox(height: 8),
-          _buildDetailRow(
-            label: "Duration",
-            value: _calculateDaysRunning(widget.habit.startDate),
-            color: widget.habitColor,
-            icon: Icons.schedule,
-          ),
-        ],
-      ),
+            if (_shouldShowEndDate()) ...[
+              const SizedBox(height: 10),
+              _buildDetailRow(
+                label: 'End',
+                value: _formatDate(habit.endDate!),
+                color: habitColor,
+                icon: Icons.calendar_today,
+              ),
+            ],
+            const SizedBox(height: 10),
+            _buildDetailRow(
+              label: 'Duration',
+              value: _calculateDaysRunning(habit.startDate),
+              color: habitColor,
+              icon: Icons.schedule,
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -144,34 +148,45 @@ class _HabitDetailExplanationWidgetState
     IconData? icon,
   }) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 8),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.black54,
-                letterSpacing: 0.5,
+        if (icon != null) ...[
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: color),
+          ),
+          const SizedBox(width: 10),
+        ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black54,
+                  letterSpacing: 0.5,
+                ),
               ),
-            ),
-          ],
-        ),
-        Flexible(
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-            textAlign: TextAlign.end,
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                  height: 1.35,
+                ),
+                textAlign: TextAlign.start,
+              ),
+            ],
           ),
         ),
       ],
@@ -197,11 +212,9 @@ class _HabitDetailExplanationWidgetState
     try {
       return DateFormat('dd MMMM yyyy', 'en_US').format(dateTime);
     } catch (e) {
-      // Fallback to English format if the locale is not initialized
       try {
         return DateFormat('dd MMMM yyyy').format(dateTime);
       } catch (e) {
-        // Last resort: simple format
         return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
       }
     }
@@ -214,12 +227,12 @@ class _HabitDetailExplanationWidgetState
   }
 
   bool _shouldShowEndDate() {
-    final endDate = widget.habit.endDate;
+    final endDate = habit.endDate;
     if (endDate == null) {
       return false;
     }
 
-    final normalizedStart = dateOnlyInIndonesia(widget.habit.startDate);
+    final normalizedStart = dateOnlyInIndonesia(habit.startDate);
     final normalizedEnd = dateOnlyInIndonesia(endDate);
     return normalizedEnd.isAfter(normalizedStart);
   }

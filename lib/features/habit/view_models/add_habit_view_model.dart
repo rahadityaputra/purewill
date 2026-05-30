@@ -43,6 +43,10 @@ class AddHabitViewModel extends StateNotifier<AddHabitState> {
   AddHabitViewModel(this._habitApiService, this._meApiService)
     : super(AddHabitState());
 
+  void reset() {
+    state = AddHabitState();
+  }
+
   Future<void> loadCategories() async {
     state = state.copyWith(status: AddHabitStatus.loading, errorMessage: null);
 

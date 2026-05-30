@@ -15,36 +15,32 @@ import 'package:purewill/features/nofap/view_models/nofap_view_model.dart';
 import 'package:purewill/features/auth/providers/auth_provider.dart';
 
 final habitApiServiceProvider = Provider<HabitApiService>((ref) {
-  return HabitApiService(authRepository: ref.watch(authRepositoryProvider));
+  return HabitApiService(client: ref.watch(httpClientProvider));
 });
 
 final categoryApiServiceProvider = Provider<CategoryApiService>((ref) {
-  return CategoryApiService(authRepository: ref.watch(authRepositoryProvider));
+  return CategoryApiService(client: ref.watch(httpClientProvider));
 });
 
 final unitApiServiceProvider = Provider<UnitApiService>((ref) {
-  return UnitApiService(authRepository: ref.watch(authRepositoryProvider));
+  return UnitApiService(client: ref.watch(httpClientProvider));
 });
 
 final meApiServiceProvider = Provider<MeApiService>((ref) {
-  return MeApiService(authRepository: ref.watch(authRepositoryProvider));
+  return MeApiService(client: ref.watch(httpClientProvider));
 });
 
 final nofapSessionApiServiceProvider = Provider<NofapSessionApiService>((ref) {
-  return NofapSessionApiService(
-    authRepository: ref.watch(authRepositoryProvider),
-  );
+  return NofapSessionApiService(client: ref.watch(httpClientProvider));
 });
 
 final reminderApiServiceProvider = Provider<ReminderApiService>((ref) {
-  return ReminderApiService(authRepository: ref.watch(authRepositoryProvider));
+  return ReminderApiService(client: ref.watch(httpClientProvider));
 });
 
 final motivationServiceProvider = Provider<MotivationService>((ref) {
   return MotivationService();
 });
-
-// ==================== TOKEN SYNC ====================
 final habitTokenSyncProvider = Provider<void>((ref) {
   final authState = ref.watch(authNotifierProvider);
   final habitService = ref.watch(habitApiServiceProvider);
@@ -53,136 +49,145 @@ final habitTokenSyncProvider = Provider<void>((ref) {
   final meService = ref.watch(meApiServiceProvider);
   final reminderService = ref.watch(reminderApiServiceProvider);
   final nofapService = ref.watch(nofapSessionApiServiceProvider);
-  final authRepo = ref.watch(authRepositoryProvider);
+  final authService = ref.watch(authServiceProvider);
 
-  if (authState.user != null && authRepo.accessToken != null) {
-    habitService.setAccessToken(authRepo.accessToken!);
-    categoryService.setAccessToken(authRepo.accessToken!);
-    unitService.setAccessToken(authRepo.accessToken!);
-    meService.setAccessToken(authRepo.accessToken!);
-    reminderService.setAccessToken(authRepo.accessToken!);
-    nofapService.setAccessToken(authRepo.accessToken!);
+  if (authState.user != null && authService.accessToken != null) {
+    habitService.setAccessToken(authService.accessToken!);
+    categoryService.setAccessToken(authService.accessToken!);
+    unitService.setAccessToken(authService.accessToken!);
+    meService.setAccessToken(authService.accessToken!);
+    reminderService.setAccessToken(authService.accessToken!);
+    nofapService.setAccessToken(authService.accessToken!);
   }
 });
-
-// ==================== HABIT NOTIFIER ====================
-final habitNotifierProvider =
-    StateNotifierProvider<HabitsViewModel, HabitsState>((ref) {
-      ref.watch(habitTokenSyncProvider);
-
-      final habitApiService = ref.watch(habitApiServiceProvider);
-      final meApiService = ref.watch(meApiServiceProvider);
-      ref.listen(authNotifierProvider, (previous, next) {
-        if (previous?.user?.id != next.user?.id) {
-          ref.invalidateSelf();
-          final authRepo = ref.read(authRepositoryProvider);
-          final habitService = ref.read(habitApiServiceProvider);
-          final meService = ref.read(meApiServiceProvider);
-          final categoryService = ref.read(categoryApiServiceProvider);
-          final unitService = ref.read(unitApiServiceProvider);
-          if (authRepo.accessToken != null) {
-            habitService.setAccessToken(authRepo.accessToken!);
-            categoryService.setAccessToken(authRepo.accessToken!);
-            unitService.setAccessToken(authRepo.accessToken!);
-            meService.setAccessToken(authRepo.accessToken!);
-          }
-        }
-      });
-
-      return HabitsViewModel(habitApiService, meApiService);
-    });
-
-final homeNotifierProvider = StateNotifierProvider<HomeViewModel, HomeState>((
+final StateNotifierProvider<HabitsViewModel, HabitsState>
+habitNotifierProvider = StateNotifierProvider<HabitsViewModel, HabitsState>((
   ref,
 ) {
   ref.watch(habitTokenSyncProvider);
 
   final habitApiService = ref.watch(habitApiServiceProvider);
   final meApiService = ref.watch(meApiServiceProvider);
-
+  final viewModel = HabitsViewModel(habitApiService, meApiService);
   ref.listen(authNotifierProvider, (previous, next) {
     if (previous?.user?.id != next.user?.id) {
-      ref.invalidateSelf();
-      final authRepo = ref.read(authRepositoryProvider);
+      viewModel.clearState();
+      final authService = ref.read(authServiceProvider);
       final habitService = ref.read(habitApiServiceProvider);
       final meService = ref.read(meApiServiceProvider);
-      if (authRepo.accessToken != null) {
-        habitService.setAccessToken(authRepo.accessToken!);
-        meService.setAccessToken(authRepo.accessToken!);
+      final categoryService = ref.read(categoryApiServiceProvider);
+      final unitService = ref.read(unitApiServiceProvider);
+      if (authService.accessToken != null) {
+        habitService.setAccessToken(authService.accessToken!);
+        categoryService.setAccessToken(authService.accessToken!);
+        unitService.setAccessToken(authService.accessToken!);
+        meService.setAccessToken(authService.accessToken!);
       }
     }
   });
 
-  return HomeViewModel(habitApiService, meApiService);
+  return viewModel;
 });
 
-final addHabitNotifierProvider =
+final StateNotifierProvider<HomeViewModel, HomeState> homeNotifierProvider =
+    StateNotifierProvider<HomeViewModel, HomeState>((ref) {
+      ref.watch(habitTokenSyncProvider);
+
+      final habitApiService = ref.watch(habitApiServiceProvider);
+      final meApiService = ref.watch(meApiServiceProvider);
+      final viewModel = HomeViewModel(habitApiService, meApiService);
+
+      ref.listen(authNotifierProvider, (previous, next) {
+        if (previous?.user?.id != next.user?.id) {
+          viewModel.reset();
+          final authService = ref.read(authServiceProvider);
+          final habitService = ref.read(habitApiServiceProvider);
+          final meService = ref.read(meApiServiceProvider);
+          if (authService.accessToken != null) {
+            habitService.setAccessToken(authService.accessToken!);
+            meService.setAccessToken(authService.accessToken!);
+          }
+        }
+      });
+
+      return viewModel;
+    });
+
+final StateNotifierProvider<AddHabitViewModel, AddHabitState>
+addHabitNotifierProvider =
     StateNotifierProvider<AddHabitViewModel, AddHabitState>((ref) {
       ref.watch(habitTokenSyncProvider);
 
       final habitApiService = ref.watch(habitApiServiceProvider);
       final meApiService = ref.watch(meApiServiceProvider);
+      final viewModel = AddHabitViewModel(habitApiService, meApiService);
 
       ref.listen(authNotifierProvider, (previous, next) {
         if (previous?.user?.id != next.user?.id) {
-          ref.invalidateSelf();
-          final authRepo = ref.read(authRepositoryProvider);
+          viewModel.reset();
+          final authService = ref.read(authServiceProvider);
           final habitService = ref.read(habitApiServiceProvider);
           final meService = ref.read(meApiServiceProvider);
-          if (authRepo.accessToken != null) {
-            habitService.setAccessToken(authRepo.accessToken!);
-            meService.setAccessToken(authRepo.accessToken!);
+          if (authService.accessToken != null) {
+            habitService.setAccessToken(authService.accessToken!);
+            meService.setAccessToken(authService.accessToken!);
           }
         }
       });
 
-      return AddHabitViewModel(habitApiService, meApiService);
+      return viewModel;
     });
 
-final editHabitNotifierProvider =
+final StateNotifierProvider<EditHabitViewModel, HabitsState>
+editHabitNotifierProvider =
     StateNotifierProvider<EditHabitViewModel, HabitsState>((ref) {
       ref.watch(habitTokenSyncProvider);
 
       final habitApiService = ref.watch(habitApiServiceProvider);
       final meApiService = ref.watch(meApiServiceProvider);
+      final viewModel = EditHabitViewModel(habitApiService, meApiService);
 
       ref.listen(authNotifierProvider, (previous, next) {
         if (previous?.user?.id != next.user?.id) {
-          ref.invalidateSelf();
-          final authRepo = ref.read(authRepositoryProvider);
+          viewModel.reset();
+          final authService = ref.read(authServiceProvider);
           final habitService = ref.read(habitApiServiceProvider);
           final meService = ref.read(meApiServiceProvider);
-          if (authRepo.accessToken != null) {
-            habitService.setAccessToken(authRepo.accessToken!);
-            meService.setAccessToken(authRepo.accessToken!);
+          if (authService.accessToken != null) {
+            habitService.setAccessToken(authService.accessToken!);
+            meService.setAccessToken(authService.accessToken!);
           }
         }
       });
 
-      return EditHabitViewModel(habitApiService, meApiService);
+      return viewModel;
     });
 
-final nofapNotifierProvider = StateNotifierProvider<NofapViewModel, NofapState>(
-  (ref) {
-    ref.watch(habitTokenSyncProvider);
+final StateNotifierProvider<NofapViewModel, NofapState> nofapNotifierProvider =
+    StateNotifierProvider<NofapViewModel, NofapState>((ref) {
+      ref.watch(habitTokenSyncProvider);
 
-    final nofapService = ref.watch(nofapSessionApiServiceProvider);
-    final meService = ref.watch(meApiServiceProvider);
-    final motivationService = ref.watch(motivationServiceProvider);
+      final nofapService = ref.watch(nofapSessionApiServiceProvider);
+      final meService = ref.watch(meApiServiceProvider);
+      final motivationService = ref.watch(motivationServiceProvider);
+      final viewModel = NofapViewModel(
+        nofapService,
+        meService,
+        motivationService,
+      );
 
-    ref.listen(authNotifierProvider, (previous, next) {
-      if (previous?.user?.id != next.user?.id) {
-        ref.invalidateSelf();
-        final authRepo = ref.read(authRepositoryProvider);
-        final service = ref.read(nofapSessionApiServiceProvider);
-        final meService = ref.read(meApiServiceProvider);
-        if (authRepo.accessToken != null) {
-          service.setAccessToken(authRepo.accessToken!);
-          meService.setAccessToken(authRepo.accessToken!);
+      ref.listen(authNotifierProvider, (previous, next) {
+        if (previous?.user?.id != next.user?.id) {
+          viewModel.reset();
+          final authService = ref.read(authServiceProvider);
+          final service = ref.read(nofapSessionApiServiceProvider);
+          final meService = ref.read(meApiServiceProvider);
+          if (authService.accessToken != null) {
+            service.setAccessToken(authService.accessToken!);
+            meService.setAccessToken(authService.accessToken!);
+          }
         }
-      }
-    });
+      });
 
-    return NofapViewModel(nofapService, meService, motivationService);
-  },
-);
+      return viewModel;
+    });

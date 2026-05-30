@@ -7,6 +7,7 @@ import 'package:purewill/features/habit/providers/habit_provider.dart';
 import 'package:purewill/features/habit/models/habit_model.dart';
 import 'package:purewill/features/habit/widgets/category_dropdown.dart';
 import 'package:purewill/features/habit/widgets/save_button.dart';
+
 class EditHabitScreen extends ConsumerStatefulWidget {
   final HabitModel habit;
 
@@ -67,7 +68,6 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
         _customUnitController.text = habit.unit!;
       }
     }
-
   }
 
   @override
@@ -123,7 +123,6 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
           );
         }
       } catch (error) {
-        // print('=== HABIT UPDATE ERROR: $error ===');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to update habit: $error')),
@@ -165,7 +164,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-              child: Container(color: Colors.black.withOpacity(0.1)),
+              child: Container(color: Colors.black.withValues(alpha: 0.1)),
             ),
           ),
 
@@ -191,7 +190,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -202,7 +201,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                         decoration: InputDecoration(
                           hintText: 'e.g. Morning Meditation',
                           filled: true,
-                          fillColor: Colors.white.withOpacity(0.95),
+                          fillColor: Colors.white.withValues(alpha: 0.95),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -239,7 +238,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -252,7 +251,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                         decoration: InputDecoration(
                           hintText: 'Add notes for this habit',
                           filled: true,
-                          fillColor: Colors.white.withOpacity(0.95),
+                          fillColor: Colors.white.withValues(alpha: 0.95),
                           counterStyle: TextStyle(color: Colors.grey[700]),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -288,7 +287,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -297,7 +296,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                       child: Container(
                         width: double.infinity,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.95),
+                          color: Colors.white.withValues(alpha: 0.95),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: CategoryDropdown(
@@ -327,7 +326,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -335,7 +334,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                             ),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.95),
+                                color: Colors.white.withValues(alpha: 0.95),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: TextFormField(
@@ -383,7 +382,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -391,11 +390,11 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                             ),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.95),
+                                color: Colors.white.withValues(alpha: 0.95),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: DropdownButtonFormField<String>(
-                                value: _selectedUnit,
+                                initialValue: _selectedUnit,
                                 decoration: InputDecoration(
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -455,7 +454,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -463,7 +462,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
                         ),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.95),
+                            color: Colors.white.withValues(alpha: 0.95),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: TextFormField(

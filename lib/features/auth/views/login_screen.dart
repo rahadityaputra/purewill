@@ -19,12 +19,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _enableBiometric = false;
   bool _isBiometricAvailable = false;
   bool _isBiometricLoginLoading = false;
+  bool _isBiometricEnabled = false;
 
   final TextEditingController _emailController = TextEditingController(
-    text: 'rahaditya.putra@example.com',
+    text: 'demo.user@purewill.local',
   );
   final TextEditingController _passwordController = TextEditingController(
-    text: 'Password123!',
+    text: "DemoUser123!",
   );
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final ScrollController _scrollController = ScrollController();
@@ -35,6 +36,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void initState() {
     super.initState();
     _checkBiometricAvailability();
+    _checkBiometricLoginAvailable();
     _checkSavedLogin();
   }
 
@@ -46,6 +48,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() {
       _isBiometricAvailable = isAvailable;
     });
+  }
+
+  Future<void> _checkBiometricLoginAvailable() async {
+    final authViewModel = ref.read(authNotifierProvider.notifier);
+    final isAvailable = await authViewModel.isBiometricLoginAvailable();
+
+    if (mounted) {
+      setState(() {
+        _isBiometricEnabled = isAvailable;
+      });
+    }
   }
 
   Future<void> _checkSavedLogin() async {
@@ -174,6 +187,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authNotifierProvider);
     final isLoading = authState.status == AuthStatus.loading;
 
+    ref.listen(authNotifierProvider, (previous, next) {
+      if (previous?.user != null &&
+          next.user == null &&
+          next.errorMessage != null &&
+          mounted) {
+        debugPrint(
+          '✅ [LoginScreen] Force logout detected! Showing snackbar: ${next.errorMessage}',
+        );
+        _showSnackBar(next.errorMessage!, isError: true);
+      }
+    });
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: GestureDetector(
@@ -253,7 +278,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 12,
                                 offset: const Offset(0, 6),
                                 spreadRadius: 2,
@@ -287,8 +312,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
 
                               SizedBox(height: 16),
-                              // Biometric Login Button
-                              if (_isBiometricAvailable &&
+                              if (_isBiometricEnabled &&
+                                  _isBiometricAvailable &&
                                   !_isBiometricLoginLoading)
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 16),
@@ -358,8 +383,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     ),
                                   ),
                                 ),
-
-                              // Divider
                               if (_isBiometricAvailable)
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -394,8 +417,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     ],
                                   ),
                                 ),
-
-                              // Email field
                               Container(
                                 height: 40,
                                 decoration: BoxDecoration(
@@ -417,7 +438,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
                                     ),
@@ -497,7 +520,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
                                     ),

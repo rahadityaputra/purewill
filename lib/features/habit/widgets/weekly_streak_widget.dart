@@ -16,7 +16,7 @@ class WeeklyStreakWidget extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFED7AA), // rgb(254 215 170)
+        color: const Color(0xFFFED7AA), 
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE9ECEF)),
       ),

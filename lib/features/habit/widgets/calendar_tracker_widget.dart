@@ -10,7 +10,7 @@ class CalendarTrackerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     for (final log in habitLogForThisMonth) {
-      print('date: ${log.logDate}, status: ${log.status}');
+      debugPrint('date: ${log.logDate}, status: ${log.status}');
     }
     final now = nowInIndonesia();
     final firstDayOfMonth = DateTime(now.year, now.month, 1);
@@ -29,7 +29,7 @@ class CalendarTrackerWidget extends StatelessWidget {
             border: Border.all(color: const Color(0xFFE9ECEF)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -159,7 +159,6 @@ class CalendarTrackerWidget extends StatelessWidget {
   }
 
   String _getDayStatus(DateTime date) {
-    // Find log for this specific date
     final logForDate = habitLogForThisMonth
         .where(
           (log) =>
@@ -169,12 +168,19 @@ class CalendarTrackerWidget extends StatelessWidget {
         )
         .toList();
 
+    final dateOnly = DateTime(date.year, date.month, date.day);
+    final todayOnly = dateOnlyInIndonesia(nowInIndonesia());
     if (logForDate.isEmpty) {
-      return 'default'; // No log entry for this date
+      if (dateOnly.isBefore(todayOnly)) {
+        return 'missed';
+      }
+      return 'default';
     }
-
-    // Check the status of the log
     final log = logForDate.first;
+    if (dateOnly.isBefore(todayOnly)) {
+      if (log.status == LogStatus.success) return 'success';
+      return 'missed';
+    }
     switch (log.status) {
       case LogStatus.success:
         return 'success';
@@ -195,11 +201,11 @@ class CalendarTrackerWidget extends StatelessWidget {
   Color _getDayColor(String status) {
     switch (status) {
       case 'success':
-        return const Color(0xFF4CAF50); // Green for success
+        return const Color(0xFF4CAF50);
       case 'missed':
-        return const Color(0xFFF44336); // Red for failed/missed
+        return const Color(0xFFF44336);
       case 'default':
-        return Colors.grey[300]!; // Default grey for no log
+        return Colors.grey[300]!;
       default:
         return Colors.transparent;
     }

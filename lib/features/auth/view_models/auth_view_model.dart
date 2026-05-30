@@ -1,5 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:purewill/features/auth/services/auth_repository.dart';
+import 'package:purewill/features/auth/services/auth_service.dart';
 import 'package:purewill/features/auth/services/biometric_service.dart';
 import 'package:purewill/features/auth/services/secure_storage_repository.dart';
 import 'package:purewill/features/auth/models/auth_model.dart';
@@ -28,19 +29,19 @@ class AuthState {
 }
 
 class AuthViewModel extends StateNotifier<AuthState> {
-  final AuthRepository _repository;
+  final AuthService _authService;
 
   final BiometricService _biometricService = BiometricService();
   final SecureStorageRepository _secureStorage = SecureStorageRepository();
 
-  AuthViewModel(this._repository)
+  AuthViewModel(this._authService)
     : super(AuthState(status: AuthStatus.loading));
 
   Future<void> restoreSession({bool requireBiometric = false}) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
 
     try {
-      final restoredUser = await _repository.restoreSession(
+      final restoredUser = await _authService.restoreSession(
         requireBiometric: requireBiometric,
       );
       if (restoredUser == null) {
@@ -69,7 +70,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
   Future<void> login(String email, String password) async {
     try {
       state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
-      final user = await _repository.login(email: email, password: password);
+      final user = await _authService.login(email: email, password: password);
       if (user != null) {
         state = state.copyWith(
           status: AuthStatus.success,
@@ -78,16 +79,14 @@ class AuthViewModel extends StateNotifier<AuthState> {
         );
       }
     } on AuthException catch (e) {
-      print("error auth nih");
-      print(e.toString());
+      debugPrint('AuthViewModel login auth error: $e');
       state = state.copyWith(
         status: AuthStatus.failure,
         errorMessage: e.formattedMessage,
       );
       rethrow;
     } catch (e) {
-      print("error nih");
-      print(e.toString());
+      debugPrint('AuthViewModel login unexpected error: $e');
       state = state.copyWith(
         status: AuthStatus.failure,
         errorMessage: "Server Error",
@@ -108,7 +107,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
     try {
       state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
 
-      final user = await _repository.signup(
+      final user = await _authService.signup(
         fullname: fullname,
         username: username,
         email: email,
@@ -128,16 +127,14 @@ class AuthViewModel extends StateNotifier<AuthState> {
         throw AuthException('Failed to create user account');
       }
     } on AuthException catch (e) {
-      print("error auth nih");
-      print(e.toString());
+      debugPrint('AuthViewModel signup auth error: $e');
       state = state.copyWith(
         status: AuthStatus.failure,
         errorMessage: e.formattedMessage,
       );
       rethrow;
     } catch (e) {
-      print("error nih");
-      print(e.toString());
+      debugPrint('AuthViewModel signup unexpected error: $e');
       state = state.copyWith(
         status: AuthStatus.failure,
         errorMessage: "Server Error",
@@ -149,7 +146,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
   Future<void> logout() async {
     try {
       state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
-      await _repository.logout();
+      await _authService.logout();
       await clearSavedCredentials();
 
       state = AuthState(
@@ -169,8 +166,6 @@ class AuthViewModel extends StateNotifier<AuthState> {
       );
     }
   }
-
-  // ============ BIOMETRIC METHODS ============
 
   Future<bool> loginWithBiometric() async {
     try {
@@ -199,12 +194,10 @@ class AuthViewModel extends StateNotifier<AuthState> {
         return false;
       }
 
-      // After successful biometric verification, attempt to restore session
-      // using stored tokens (refresh token). This avoids storing user password.
       state = state.copyWith(status: AuthStatus.loading);
 
       try {
-        final restoredUser = await _repository.restoreSession();
+        final restoredUser = await _authService.restoreSession();
         if (restoredUser != null) {
           state = state.copyWith(
             status: AuthStatus.success,
@@ -245,8 +238,6 @@ class AuthViewModel extends StateNotifier<AuthState> {
     required String email,
     required bool enableBiometric,
   }) async {
-    // We deliberately DO NOT store the password. Only save email and the
-    // biometric enabled flag; session tokens are already stored elsewhere.
     await _secureStorage.saveCredentials(
       email: email,
       enableBiometric: enableBiometric,
@@ -255,5 +246,29 @@ class AuthViewModel extends StateNotifier<AuthState> {
 
   Future<void> clearSavedCredentials() async {
     await _secureStorage.clearCredentials();
+  }
+
+  Future<void> forceLogout({String? reason}) async {
+    debugPrint('🔴 [AuthViewModel] forceLogout called with reason: $reason');
+    try {
+      await _authService.logout();
+      await clearSavedCredentials();
+
+      state = AuthState(
+        status: AuthStatus.initial,
+        user: null,
+        errorMessage: reason ?? 'Your session has expired. Please login again.',
+      );
+      debugPrint('✅ [AuthViewModel] forceLogout completed, state updated');
+    } catch (e) {
+      debugPrint(
+        '🔴 [AuthViewModel] forceLogout error: $e, but still clearing state',
+      );
+      state = AuthState(
+        status: AuthStatus.initial,
+        user: null,
+        errorMessage: reason ?? 'Your session has expired. Please login again.',
+      );
+    }
   }
 }

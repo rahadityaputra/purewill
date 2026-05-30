@@ -8,6 +8,7 @@ import 'package:purewill/core/utils/indonesia_timezone.dart';
 import 'package:purewill/core/widgets/primary_action_button.dart';
 import 'package:purewill/features/user/providers/timezone_provider.dart';
 import 'package:purewill/features/user/views/edit_profile_screen.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -111,35 +112,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final currentUser = user;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile'), centerTitle: false),
+      appBar: const ConsistentAppBar(title: 'Profile'),
       body: RefreshIndicator(
         onRefresh: () => _onRefresh(ref),
         child: state.isLoading && user == null
-            ? const Center(child: CircularProgressIndicator())
+            ? const AppLoadingView()
             : ListView(
                 padding: const EdgeInsets.all(20),
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 18,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
+                  ConsistentSectionCard(
                     child: Column(
                       children: [
                         CircleAvatar(
                           radius: 44,
                           backgroundColor: const Color(
                             0xFF7C3AED,
-                          ).withOpacity(0.12),
+                          ).withValues(alpha: 0.12),
                           backgroundImage:
                               (user?.avatarUrl != null &&
                                   user!.avatarUrl!.isNotEmpty)
@@ -259,29 +248,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           const SizedBox(height: 12),
                           const LinearProgressIndicator(minHeight: 2),
                         ],
-                        if (timezoneState.errorMessage != null) ...[
-                          const SizedBox(height: 12),
-                          Text(
-                            timezoneState.errorMessage!,
-                            style: const TextStyle(color: Colors.red),
-                          ),
-                        ],
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  // Biometric toggle
+                  const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 6,
-                    ),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
+                          color: Colors.black.withValues(alpha: 0.06),
                           blurRadius: 12,
                           offset: const Offset(0, 6),
                         ),
@@ -315,13 +293,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             if (state.user == null) return;
 
                             if (val) {
-                              // Enable biometric: check device support and enrolled biometrics
                               final available = await _biometricService
                                   .isBiometricAvailable();
                               final types = await _biometricService
                                   .getAvailableBiometrics();
                               if (!available || types.isEmpty) {
-                                if (!mounted) return;
+                                if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
@@ -343,7 +320,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   );
 
                               if (!authResult.success) {
-                                if (!mounted) return;
+                                if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
@@ -355,14 +332,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 return;
                               }
 
-                              // Save preference (we do not save password). Tokens are already stored.
                               await ref
                                   .read(authNotifierProvider.notifier)
                                   .saveCredentialsForBiometric(
                                     email: state.user!.email,
                                     enableBiometric: true,
                                   );
-                              if (!mounted) return;
+                              if (!context.mounted) return;
                               setState(() {
                                 _biometricEnabled = true;
                               });
@@ -372,11 +348,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 ),
                               );
                             } else {
-                              // Disable
                               await ref
                                   .read(authNotifierProvider.notifier)
                                   .clearSavedCredentials();
-                              if (!mounted) return;
+                              if (!context.mounted) return;
                               setState(() {
                                 _biometricEnabled = false;
                               });
@@ -471,7 +446,7 @@ class _SectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),

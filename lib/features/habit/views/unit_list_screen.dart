@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purewill/features/habit/providers/category_unit_management_provider.dart';
 import 'package:purewill/features/habit/views/create_unit_screen.dart';
 import 'package:purewill/features/habit/views/edit_unit_screen.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
 
 class UnitListScreen extends ConsumerWidget {
   const UnitListScreen({super.key});
@@ -56,8 +57,8 @@ class UnitListScreen extends ConsumerWidget {
     final vm = ref.read(unitListViewModelProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Units'),
+      appBar: ConsistentAppBar(
+        title: 'Units',
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -94,18 +95,22 @@ class UnitListScreen extends ConsumerWidget {
                   child: Builder(
                     builder: (context) {
                       if (vm.isLoading && vm.units.isEmpty) {
-                        return const Center(child: CircularProgressIndicator());
+                        return const AppLoadingView();
                       }
                       if (vm.error != null && vm.units.isEmpty) {
-                        return Center(child: Text(vm.error!));
+                        return AppEmptyState(
+                          icon: Icons.error_outline,
+                          title: 'Error loading units',
+                          message: vm.error!,
+                          actionLabel: 'Retry',
+                          onAction: () => _refresh(ref),
+                        );
                       }
                       if (vm.filtered.isEmpty) {
-                        return ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: const [
-                            SizedBox(height: 120),
-                            Center(child: Text('No units found')),
-                          ],
+                        return const AppEmptyState(
+                          icon: Icons.straighten_outlined,
+                          title: 'No units found',
+                          message: 'Create a unit to keep habit entries consistent.',
                         );
                       }
                       return ListView.separated(

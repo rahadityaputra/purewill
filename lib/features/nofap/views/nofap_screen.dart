@@ -10,6 +10,8 @@ import 'package:purewill/features/home/views/home_screen.dart';
 import 'package:purewill/features/nofap/view_models/nofap_view_model.dart';
 import 'package:purewill/core/widgets/dialogs/app_alert_dialog.dart';
 import 'package:purewill/core/widgets/dialogs/app_confirm_dialog.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
+import 'package:purewill/features/pet_game/pet_screen.dart';
 
 class NoFapScreen extends ConsumerStatefulWidget {
   const NoFapScreen({super.key});
@@ -46,7 +48,7 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
       );
     } else if (index == 4) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const ConversationListScreen()),
+        MaterialPageRoute(builder: (context) => const PetScreen()),
       );
     }
   }
@@ -222,17 +224,8 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
     final successDays = nofapState.successDays;
 
     return Scaffold(
-      appBar: AppBar(
-        elevation: 4,
-        shadowColor: Colors.black.withOpacity(0.2),
-        title: const Text(
-          'NoFap Journey',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
+      appBar: ConsistentAppBar(
+        title: 'NoFap Journey',
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.red),
@@ -256,11 +249,10 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-              child: Container(color: Colors.black.withOpacity(0.1)),
+              child: Container(color: Colors.black.withValues(alpha: 0.1)),
             ),
           ),
 
-          // Main Content
           SafeArea(
             child: RefreshIndicator(
               onRefresh: () async {
@@ -276,7 +268,6 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
                     _buildErrorCard(nofapState.errorMessage!),
                     const SizedBox(height: 16),
                   ],
-                  // Current Streak Card
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
@@ -288,7 +279,7 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -320,7 +311,6 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Statistics Row
                   Row(
                     children: [
                       Expanded(
@@ -345,15 +335,14 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Motivational Quote Card
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -406,11 +395,11 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -463,11 +452,11 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -537,11 +526,11 @@ class _NoFapScreenState extends ConsumerState<NoFapScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

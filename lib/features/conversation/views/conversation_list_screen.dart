@@ -9,6 +9,8 @@ import 'package:purewill/features/home/views/home_screen.dart';
 import 'package:purewill/features/nofap/views/nofap_screen.dart';
 import 'package:purewill/core/widgets/dialogs/app_confirm_dialog.dart';
 import 'package:purewill/core/widgets/dialogs/app_input_dialog.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
+import 'package:purewill/features/pet_game/pet_screen.dart';
 
 class ConversationListScreen extends ConsumerStatefulWidget {
   const ConversationListScreen({super.key});
@@ -38,7 +40,7 @@ class _ConversationListScreenState
       return;
     } else if (index == 4) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const ConversationListScreen()),
+        MaterialPageRoute(builder: (context) => const PetScreen()),
       );
     }
   }
@@ -48,17 +50,8 @@ class _ConversationListScreenState
     final conversationsAsync = ref.watch(conversationNotifierProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        shadowColor: Colors.black.withOpacity(0.2),
-        title: const Text(
-          'Conversations',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
+      appBar: ConsistentAppBar(
+        title: 'Conversations',
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -79,61 +72,23 @@ class _ConversationListScreenState
         ),
       ),
       body: conversationsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
-              const SizedBox(height: 16),
-              Text(
-                'Error loading conversations',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                error.toString(),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  ref.read(conversationNotifierProvider.notifier).refresh();
-                },
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        loading: () => const AppLoadingView(),
+        error: (error, stackTrace) => AppEmptyState(
+          icon: Icons.error_outline,
+          title: 'Error loading conversations',
+          message: stackTrace.toString(),
+          actionLabel: 'Retry',
+          onAction: () {
+            ref.read(conversationNotifierProvider.notifier).refresh();
+          },
         ),
         data: (conversations) => conversations.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.chat_outlined,
-                      size: 48,
-                      color: Colors.grey,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No conversations yet',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Start a new conversation to chat with AI',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: _createNewConversation,
-                      icon: const Icon(Icons.add),
-                      label: const Text('New Conversation'),
-                    ),
-                  ],
-                ),
+            ? AppEmptyState(
+                icon: Icons.chat_outlined,
+                title: 'No conversations yet',
+                message: 'Start a new conversation to chat with AI',
+                actionLabel: 'New Conversation',
+                onAction: _createNewConversation,
               )
             : RefreshIndicator(
                 onRefresh: () async {
@@ -211,7 +166,7 @@ class _ConversationListScreenState
               .read(conversationNotifierProvider.notifier)
               .deleteConversation(conversationId);
 
-          if (success && mounted) {
+          if (success && context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Conversation deleted')),
             );
@@ -251,7 +206,7 @@ class ConversationListItem extends StatelessWidget {
       ),
       trailing: PopupMenuButton(
         itemBuilder: (context) => [
-          PopupMenuItem(child: const Text('Delete'), onTap: onDelete),
+          PopupMenuItem(onTap: onDelete, child: const Text('Delete')),
         ],
       ),
       onTap: onTap,

@@ -1,42 +1,24 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import 'package:purewill/features/auth/services/auth_repository.dart';
 import 'package:purewill/features/auth/models/auth_model.dart';
 import 'package:purewill/features/habit/models/category_model.dart';
-import 'package:purewill/features/auth/services/auth_refresh_client.dart';
 
 class CategoryApiService {
   late final String baseUrl;
   String? _accessToken;
   late final http.Client _client;
 
-  CategoryApiService({http.Client? client, AuthRepository? authRepository}) {
-    _client = authRepository != null
-        ? AuthRefreshClient(
-            client ?? http.Client(),
-            authRepository,
-            onTokenRefreshed: (token) {
-              _accessToken = token;
-            },
-          )
-        : (client ?? http.Client());
+  CategoryApiService({http.Client? client})
+    : _client = client ?? http.Client() {
     final host = dotenv.env['API_HOST'] ?? 'localhost';
     final port = dotenv.env['API_PORT'] ?? '4000';
     baseUrl = 'http://$host:$port/api';
-
-    if (kDebugMode) {
-      print('🌐 Category API Base URL: $baseUrl');
-    }
   }
 
   void setAccessToken(String token) {
     _accessToken = token;
-    if (kDebugMode) {
-      print('🔐 CategoryApiService: Access token set');
-    }
   }
 
   Map<String, String> get _headers => {
@@ -88,14 +70,10 @@ class CategoryApiService {
 
   Future<List<CategoryModel>> getAllCategories() async {
     try {
-      if (kDebugMode) print('📡 GET $baseUrl/categories');
-
       final response = await _client.get(
         Uri.parse('$baseUrl/categories'),
         headers: _headers,
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = _extractDataList(response.body);
@@ -122,14 +100,10 @@ class CategoryApiService {
 
   Future<CategoryModel> getCategoryDetail(int id) async {
     try {
-      if (kDebugMode) print('📡 GET $baseUrl/categories/$id');
-
       final response = await _client.get(
         Uri.parse('$baseUrl/categories/$id'),
         headers: _headers,
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return CategoryModel.fromJson(_extractDataMap(response.body));
@@ -162,16 +136,11 @@ class CategoryApiService {
           'description': description,
       };
 
-      if (kDebugMode) print('📡 POST $baseUrl/categories');
-      if (kDebugMode) print('📡 Body: $body');
-
       final response = await _client.post(
         Uri.parse('$baseUrl/categories'),
         headers: _headers,
         body: jsonEncode(body),
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 201) {
         return CategoryModel.fromJson(_extractDataMap(response.body));
@@ -203,16 +172,11 @@ class CategoryApiService {
           'description': description,
       };
 
-      if (kDebugMode) print('📡 PATCH $baseUrl/categories');
-      if (kDebugMode) print('📡 Body: $body');
-
       final response = await _client.patch(
         Uri.parse('$baseUrl/categories'),
         headers: _headers,
         body: jsonEncode(body),
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return CategoryModel.fromJson(_extractDataMap(response.body));
@@ -240,16 +204,11 @@ class CategoryApiService {
 
   Future<void> deleteCategory(int categoryId) async {
     try {
-      if (kDebugMode) print('📡 DELETE $baseUrl/categories');
-      if (kDebugMode) print('📡 Body: {"id": $categoryId}');
-
       final response = await _client.delete(
         Uri.parse('$baseUrl/categories'),
         headers: _headers,
         body: jsonEncode({'id': categoryId}),
       );
-
-      if (kDebugMode) print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return;

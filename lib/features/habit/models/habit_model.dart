@@ -82,22 +82,22 @@ class HabitModel {
   }
 
   factory HabitModel.fromJson(Map<String, dynamic> json) {
-    int _parseInt(dynamic value, {int fallback = 0}) {
+    int parseInt(dynamic value, {int fallback = 0}) {
       if (value is int) return value;
       return int.tryParse(value?.toString() ?? '') ?? fallback;
     }
 
-    int? _parseNullableInt(dynamic value) {
+    int? parseNullableInt(dynamic value) {
       if (value == null) return null;
       if (value is int) return value;
       return int.tryParse(value.toString());
     }
 
-    DateTime? _parseNullableDate(dynamic value) {
+    DateTime? parseNullableDate(dynamic value) {
       return parseUtcToIndonesia(value, fallback: null);
     }
 
-    CategoryModel? _parseCategory(
+    CategoryModel? parseCategory(
       dynamic categoryValue,
       dynamic categoryIdValue,
     ) {
@@ -108,7 +108,7 @@ class HabitModel {
         return CategoryModel.fromJson(Map<String, dynamic>.from(categoryValue));
       }
 
-      final parsedId = _parseNullableInt(categoryIdValue);
+      final parsedId = parseNullableInt(categoryIdValue);
       if (parsedId != null) {
         return CategoryModel(
           id: parsedId,
@@ -167,7 +167,7 @@ class HabitModel {
       return _parseTodayLogStatus(source['status']);
     }
 
-    String? _parseUnitName(dynamic unitValue) {
+    String? parseUnitName(dynamic unitValue) {
       if (unitValue is String) {
         return unitValue;
       }
@@ -177,19 +177,19 @@ class HabitModel {
       return null;
     }
 
-    int? _parseUnitId(dynamic unitIdValue, dynamic unitValue) {
-      final fromUnitId = _parseNullableInt(unitIdValue);
+    int? parseUnitId(dynamic unitIdValue, dynamic unitValue) {
+      final fromUnitId = parseNullableInt(unitIdValue);
       if (fromUnitId != null) {
         return fromUnitId;
       }
       if (unitValue is Map) {
-        return _parseNullableInt(unitValue['id']);
+        return parseNullableInt(unitValue['id']);
       }
       return null;
     }
 
     return HabitModel(
-      id: _parseInt(json['id']),
+      id: parseInt(json['id']),
       userId: (json['userId'] ?? json['user_id'] ?? '').toString(),
       name: json['name']?.toString() ?? '',
       frequency:
@@ -200,19 +200,19 @@ class HabitModel {
               .toString()
               .toLowerCase(),
       startDate:
-          _parseNullableDate(json['startDate'] ?? json['start_date']) ??
+          parseNullableDate(json['startDate'] ?? json['start_date']) ??
           nowInIndonesia(),
-      category: _parseCategory(
+      category: parseCategory(
         json['category'],
         json['categoryId'] ?? json['category_id'],
       ),
       notes: json['notes']?.toString(),
-      endDate: _parseNullableDate(json['endDate'] ?? json['end_date']),
-      targetValue: _parseNullableInt(
+      endDate: parseNullableDate(json['endDate'] ?? json['end_date']),
+      targetValue: parseNullableInt(
         json['targetValue'] ?? json['target_value'],
       ),
-      unit: _parseUnitName(json['unit']),
-      unitId: _parseUnitId(json['unitId'] ?? json['unit_id'], json['unit']),
+      unit: parseUnitName(json['unit']),
+      unitId: parseUnitId(json['unitId'] ?? json['unit_id'], json['unit']),
       status: (json['status'] ?? 'neutral').toString().toLowerCase(),
       todayLogStatus: extractTodayLogStatus(json),
       isLocationLocked:
@@ -229,13 +229,13 @@ class HabitModel {
           : (json['target_long'] is num
                 ? (json['target_long'] as num).toDouble()
                 : null),
-      radius: _parseNullableInt(
+      radius: parseNullableInt(
         json['radius'] ?? json['radious'] ?? json['radius'],
       ),
       isDefault: (json['isDefault'] ?? json['is_default']) == true,
       value: json['value'] is num ? (json['value'] as num).toDouble() : null,
-      createdAt: _parseNullableDate(json['createdAt'] ?? json['created_at']),
-      updatedAt: _parseNullableDate(json['updatedAt'] ?? json['updated_at']),
+      createdAt: parseNullableDate(json['createdAt'] ?? json['created_at']),
+      updatedAt: parseNullableDate(json['updatedAt'] ?? json['updated_at']),
     );
   }
 

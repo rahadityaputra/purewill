@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
 class HabitIconHelper {
-  // Method untuk mendapatkan icon berdasarkan nama habit ATAU kategori
   static IconData getHabitIcon(String habitNameOrCategory) {
     final name = habitNameOrCategory.toLowerCase();
-    
-    // Cek berdasarkan kategori dari tabel (exact match dulu)
+
     if (name == 'health & fitness' || name.contains('health') || name.contains('fitness')) {
       return Icons.favorite;
     } else if (name == 'learning & education' || name.contains('learning') || name.contains('education')) {
@@ -27,11 +25,9 @@ class HabitIconHelper {
     } else if (name == 'other') {
       return Icons.category;
     }
-    
-    // Jika bukan kategori, coba mapping dari nama habit
+
     final habitName = habitNameOrCategory.toLowerCase();
-    
-    // Mapping spesifik untuk habit-habit Anda
+
     if (habitName.contains('main') || habitName.contains('genshin') || habitName.contains('uma musume') || habitName.contains('game')) {
       return Icons.videogame_asset;
     } else if (habitName.contains('sleep') || habitName.contains('turu') || habitName.contains('early')) {
@@ -47,8 +43,7 @@ class HabitIconHelper {
     } else if (habitName.contains('oke') || habitName.contains('haooo')) {
       return Icons.check_circle;
     }
-    
-    // Fallback berdasarkan kata kunci umum
+
     if (habitName.contains('read') || habitName.contains('book')) {
       return Icons.menu_book;
     } else if (habitName.contains('meditation') || habitName.contains('yoga')) {
@@ -67,177 +62,126 @@ class HabitIconHelper {
       return Icons.security;
     } else if (habitName.contains('money') || habitName.contains('finance') || habitName.contains('budget')) {
       return Icons.attach_money;
-// >>>>>>> f2d2932ae1d617906d117abaeeb90fd7045aea0c
     }
-    
-    // Default
+
     return Icons.check_circle;
   }
 
   static Color getHabitColor(String habitNameOrCategory) {
     final name = habitNameOrCategory.toLowerCase();
-    
-    // Cek berdasarkan kategori dari tabel
+
     if (name == 'health & fitness' || name.contains('health') || name.contains('fitness')) {
-      return const Color(0xFFE91E63); // Pink
+      return const Color(0xFFE91E63);
     } else if (name == 'learning & education' || name.contains('learning') || name.contains('education')) {
-      return const Color(0xFF3F51B5); // Indigo
+      return const Color(0xFF3F51B5);
     } else if (name == 'productivity') {
-      return const Color(0xFF009688); // Teal
+      return const Color(0xFF009688);
     } else if (name == 'mindfulness & mental health' || name.contains('mindfulness') || name.contains('mental')) {
-      return const Color(0xFF9C27B0); // Purple
+      return const Color(0xFF9C27B0);
     } else if (name == 'personal care') {
-      return const Color(0xFF00BCD4); // Cyan
+      return const Color(0xFF00BCD4);
     } else if (name == 'social & relationships' || name.contains('social') || name.contains('relationship')) {
-      return const Color(0xFFFF9800); // Orange
+      return const Color(0xFFFF9800);
     } else if (name == 'finance') {
-      return const Color(0xFFFFC107); // Amber
+      return const Color(0xFFFFC107);
     } else if (name == 'hobbies & creativity' || name.contains('hobbies') || name.contains('creativity')) {
-      return const Color(0xFF9C27B0); // Purple
+      return const Color(0xFF9C27B0);
     } else if (name == 'work & career' || name.contains('work') || name.contains('career')) {
-      return const Color(0xFF607D8B); // Blue Grey
+      return const Color(0xFF607D8B);
     } else if (name == 'other') {
-      return const Color(0xFF795548); // Brown
+      return const Color(0xFF795548);
     }
-    
-    // Jika bukan kategori, coba mapping dari nama habit
+
     final habitName = habitNameOrCategory.toLowerCase();
-    
-    // Mapping spesifik untuk habit-habit Anda
+
     if (habitName.contains('main') || habitName.contains('genshin') || habitName.contains('uma musume') || habitName.contains('game')) {
-      return const Color(0xFF9C27B0); // Purple untuk game
+      return const Color(0xFF9C27B0);
     } else if (habitName.contains('sleep') || habitName.contains('turu') || habitName.contains('early')) {
-      return const Color(0xFF2196F3); // Blue untuk tidur
+      return const Color(0xFF2196F3);
     } else if (habitName.contains('nabung') || habitName.contains('uang') || habitName.contains('money')) {
-      return const Color(0xFFFFC107); // Amber untuk keuangan
+      return const Color(0xFFFFC107);
     } else if (habitName.contains('ngising') || habitName.contains('toilet')) {
-      return const Color(0xFF795548); // Brown
+      return const Color(0xFF795548);
     } else if (habitName.contains('mandi') || habitName.contains('bath')) {
-      return const Color(0xFF00BCD4); // Cyan untuk mandi
+      return const Color(0xFF00BCD4);
     } else if (habitName.contains('belajar') || habitName.contains('javascript') || habitName.contains('koding') || habitName.contains('java')) {
-      return const Color(0xFF3F51B5); // Indigo untuk belajar
+      return const Color(0xFF3F51B5);
     } else if (habitName.contains('oke') || habitName.contains('haooo')) {
-      return const Color(0xFF4CAF50); // Green untuk general
+      return const Color(0xFF4CAF50);
     }
-    
-    // Fallback berdasarkan kata kunci umum
+
     if (habitName.contains('read') || habitName.contains('book')) {
-      return const Color(0xFF2196F3); // Blue
+      return const Color(0xFF2196F3);
     } else if (habitName.contains('meditation') || habitName.contains('yoga')) {
-      return const Color(0xFF9C27B0); // Purple
+      return const Color(0xFF9C27B0);
     } else if (habitName.contains('water') || habitName.contains('drink') || habitName.contains('hydration')) {
-      return const Color(0xFF00BCD4); // Cyan
+      return const Color(0xFF00BCD4);
     } else if (habitName.contains('exercise') || habitName.contains('workout') || habitName.contains('gym') || habitName.contains('run')) {
-      return const Color(0xFFFF5722); // Deep Orange
+      return const Color(0xFFFF5722);
     }
-    
-    // Default
-    return const Color(0xFF607D8B); // Blue Grey
+
+    return const Color(0xFF607D8B);
   }
 
-  // Method untuk menentukan kategori dari habit name (untuk habit yang categoryId = null)
   static String getHabitCategory(String habitName) {
     final name = habitName.toLowerCase();
-// <<<<<<< HEAD
 
-//     if (name.contains('read') ||
-//         name.contains('book') ||
-//         name.contains('study') ||
-//         name.contains('learn')) {
-//       return "Education";
-//     } else if (name.contains('meditation') ||
-//         name.contains('yoga') ||
-//         name.contains('mindfulness')) {
-//       return "Wellness";
-//     } else if (name.contains('water') ||
-//         name.contains('drink') ||
-//         name.contains('hydration')) {
-//       return "Health";
-//     } else if (name.contains('exercise') ||
-//         name.contains('workout') ||
-//         name.contains('gym') ||
-//         name.contains('fitness')) {
-//       return "Fitness";
-//     } else if (name.contains('morning') ||
-//         name.contains('wake') ||
-//         name.contains('worsnet')) {
-//       return "Routine";
-//     } else if (name.contains('gazebo') ||
-//         name.contains('garden') ||
-//         name.contains('plant')) {
-//       return "Home";
-//     } else if (name.contains('crime') ||
-//         name.contains('security') ||
-//         name.contains('safety')) {
-//       return "Safety";
-//     } else if (name.contains('money') ||
-//         name.contains('finance') ||
-//         name.contains('budget')) {
-//       return "Finance";
-//     } else if (name.contains('exhaust') ||
-//         name.contains('energy') ||
-//         name.contains('tired')) {
-//       return "Energy";
-// =======
-    
-    // Mapping spesifik untuk habit-habit Anda
     if (name.contains('main genshin') || name.contains('main uma musume') || name.contains('game')) {
-      return "Hobbies & Creativity";
+      return 'Hobbies & Creativity';
     } else if (name.contains('sleep early') || name.contains('turu')) {
-      return "Health & Fitness";
+      return 'Health & Fitness';
     } else if (name.contains('nabung')) {
-      return "Finance";
+      return 'Finance';
     } else if (name.contains('ngising')) {
-      return "Personal Care";
+      return 'Personal Care';
     } else if (name.contains('mandi')) {
-      return "Personal Care";
+      return 'Personal Care';
     } else if (name.contains('belajar javascript') || name.contains('koding java')) {
-      return "Learning & Education";
+      return 'Learning & Education';
     } else if (name.contains('oke') || name.contains('haooo')) {
-      return "Other";
+      return 'Other';
     }
-    
-    // Mapping umum berdasarkan kata kunci
-    if (name.contains('exercise') || name.contains('workout') || name.contains('gym') || 
+
+    if (name.contains('exercise') || name.contains('workout') || name.contains('gym') ||
         name.contains('fitness') || name.contains('yoga') || name.contains('run') ||
         name.contains('sport') || name.contains('health') || name.contains('diet') ||
         name.contains('sleep') || name.contains('rest')) {
-      return "Health & Fitness";
-    } else if (name.contains('read') || name.contains('book') || name.contains('study') || 
-               name.contains('learn') || name.contains('course') || name.contains('education') ||
-               name.contains('school') || name.contains('javascript') || name.contains('java') ||
-               name.contains('code') || name.contains('programming')) {
-      return "Learning & Education";
-    } else if (name.contains('meditation') || name.contains('mindfulness') || 
-               name.contains('mental') || name.contains('therapy')) {
-      return "Mindfulness & Mental Health";
+      return 'Health & Fitness';
+    } else if (name.contains('read') || name.contains('book') || name.contains('study') ||
+        name.contains('learn') || name.contains('course') || name.contains('education') ||
+        name.contains('school') || name.contains('javascript') || name.contains('java') ||
+        name.contains('code') || name.contains('programming')) {
+      return 'Learning & Education';
+    } else if (name.contains('meditation') || name.contains('mindfulness') ||
+        name.contains('mental') || name.contains('therapy')) {
+      return 'Mindfulness & Mental Health';
     } else if (name.contains('money') || name.contains('finance') || name.contains('budget') ||
-               name.contains('save') || name.contains('invest') || name.contains('spend') ||
-               name.contains('nabung') || name.contains('uang')) {
-      return "Finance";
+        name.contains('save') || name.contains('invest') || name.contains('spend') ||
+        name.contains('nabung') || name.contains('uang')) {
+      return 'Finance';
     } else if (name.contains('work') || name.contains('career') || name.contains('job') ||
-               name.contains('office') || name.contains('business') || name.contains('meeting')) {
-      return "Work & Career";
+        name.contains('office') || name.contains('business') || name.contains('meeting')) {
+      return 'Work & Career';
     } else if (name.contains('social') || name.contains('friend') || name.contains('family') ||
-               name.contains('relationship') || name.contains('date') || name.contains('people') ||
-               name.contains('party') || name.contains('chat')) {
-      return "Social & Relationships";
+        name.contains('relationship') || name.contains('date') || name.contains('people') ||
+        name.contains('party') || name.contains('chat')) {
+      return 'Social & Relationships';
     } else if (name.contains('hobby') || name.contains('game') || name.contains('play') ||
-               name.contains('music') || name.contains('guitar') || name.contains('art') ||
-               name.contains('creative') || name.contains('craft') || name.contains('palette') ||
-               name.contains('genshin') || name.contains('uma musume')) {
-      return "Hobbies & Creativity";
+        name.contains('music') || name.contains('guitar') || name.contains('art') ||
+        name.contains('creative') || name.contains('craft') || name.contains('palette') ||
+        name.contains('genshin') || name.contains('uma musume')) {
+      return 'Hobbies & Creativity';
     } else if (name.contains('productivity') || name.contains('task') || name.contains('todo') ||
-               name.contains('schedule') || name.contains('plan') || name.contains('organize') ||
-               name.contains('timer') || name.contains('focus')) {
-      return "Productivity";
+        name.contains('schedule') || name.contains('plan') || name.contains('organize') ||
+        name.contains('timer') || name.contains('focus')) {
+      return 'Productivity';
     } else if (name.contains('care') || name.contains('bath') || name.contains('shower') ||
-               name.contains('groom') || name.contains('person') || name.contains('hygiene') ||
-               name.contains('clean') || name.contains('mandi') || name.contains('ngising') ||
-               name.contains('toilet')) {
-      return "Personal Care";
+        name.contains('groom') || name.contains('person') || name.contains('hygiene') ||
+        name.contains('clean') || name.contains('mandi') || name.contains('ngising') ||
+        name.contains('toilet')) {
+      return 'Personal Care';
     } else {
-      return "Other";
+      return 'Other';
     }
   }
 }

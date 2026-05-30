@@ -40,8 +40,6 @@ class ReminderSettingModel {
       if (raw == 'false' || raw == '0') return false;
       return fallback;
     }
-
-    // Parse the timestamp and convert to the currently selected app timezone.
     DateTime parsedTime;
     try {
       if (json['time'] is String) {
@@ -108,8 +106,6 @@ class ReminderSettingModel {
       'isSoundEnabled': isSoundEnabled,
       'isVibrationEnabled': isVibrationEnabled,
     };
-
-    // Only add id if not empty (for update)
     if (id.isNotEmpty) {
       final parsedId = int.tryParse(id);
       if (parsedId != null) {
@@ -117,14 +113,8 @@ class ReminderSettingModel {
       }
     }
 
-    // debugPrint('🎯 REMINDER SETTING TO JSON:');
-    // debugPrint('   - Exact time to store: ${time.toIso8601String()}');
-    // debugPrint('   - Hour: ${time.hour}, Minute: ${time.minute}');
-
     return json;
   }
-
-  // Create empty/default instance
   factory ReminderSettingModel.empty({required int habitId}) {
     final now = nowInIndonesia();
     return ReminderSettingModel(
@@ -170,8 +160,6 @@ class ReminderSettingModel {
   String toString() {
     return 'ReminderSettingModel{id: $id, habitId: $habitId, isEnabled: $isEnabled, time: $time, snoozeDuration: $snoozeDuration, repeatDaily: $repeatDaily, isSoundEnabled: $isSoundEnabled, isVibrationEnabled: $isVibrationEnabled, createdAt: $createdAt, updatedAt: $updatedAt}';
   }
-
-  // Helper methods
   bool get isEmpty => id.isEmpty;
   TimeOfDay get timeOfDay => TimeOfDay.fromDateTime(time);
 

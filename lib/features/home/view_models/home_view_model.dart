@@ -90,7 +90,14 @@ class HomeViewModel extends StateNotifier<HomeState> {
   final HabitApiService _habitApiService;
   final MeApiService _meApiService;
 
+  bool _active = true;
+
   HomeViewModel(this._habitApiService, this._meApiService) : super(HomeState());
+
+  void reset() {
+    _active = false;
+    state = HomeState();
+  }
 
   Future<List<HabitModel>> _fetchUserHabits() async {
     final response = await _meApiService.getMeHabits();
@@ -111,7 +118,9 @@ class HomeViewModel extends StateNotifier<HomeState> {
     try {
       final allHabits = await _fetchUserHabits();
       final today = nowInIndonesia();
-      final todayHabits = allHabits.where((habit) => habit.isActiveOn(today)).toList();
+      final todayHabits = allHabits
+          .where((habit) => habit.isActiveOn(today))
+          .toList();
 
       final meResponse = await _meApiService.getMe();
       final meData = meResponse['data'] as Map<String, dynamic>? ?? {};
@@ -120,20 +129,24 @@ class HomeViewModel extends StateNotifier<HomeState> {
       final completionStatus = await _getTodayCompletionStatus();
       final role = await _resolveUserRole();
 
-      state = state.copyWith(
-        status: HabitStatus.success,
-        todayHabits: todayHabits,
-        todayCompletionStatus: completionStatus,
-        currentUser: user,
-        userRole: role,
-        isLoadingRole: false,
-      );
+      if (_active) {
+        state = state.copyWith(
+          status: HabitStatus.success,
+          todayHabits: todayHabits,
+          todayCompletionStatus: completionStatus,
+          currentUser: user,
+          userRole: role,
+          isLoadingRole: false,
+        );
+      }
     } catch (e) {
-      state = state.copyWith(
-        status: HabitStatus.failure,
-        errorMessage: 'Failed to load home data.',
-        isLoadingRole: false,
-      );
+      if (_active) {
+        state = state.copyWith(
+          status: HabitStatus.failure,
+          errorMessage: 'Failed to load home data.',
+          isLoadingRole: false,
+        );
+      }
     }
   }
 
@@ -150,10 +163,6 @@ class HomeViewModel extends StateNotifier<HomeState> {
   Future<void> toggleHabitCompletion(HabitModel habit) async {
     final previousStatus = state.effectiveLogStatusForHabit(habit);
     final newStatus = getNextLogStatus(previousStatus);
-
-    final optimisticMap = Map<int, LogStatus>.from(state.todayCompletionStatus);
-    optimisticMap[habit.id] = newStatus;
-    state = state.copyWith(todayCompletionStatus: optimisticMap);
 
     try {
       double? lat;
@@ -172,10 +181,17 @@ class HomeViewModel extends StateNotifier<HomeState> {
         currentLat: lat,
         currentLong: long,
       );
+      final updatedMap = Map<int, LogStatus>.from(state.todayCompletionStatus);
+      updatedMap[habit.id] = newStatus;
+      state = state.copyWith(
+        todayCompletionStatus: updatedMap,
+        status: HabitStatus.success,
+      );
     } catch (e) {
-      final rollbackMap = Map<int, LogStatus>.from(state.todayCompletionStatus);
-      rollbackMap[habit.id] = previousStatus;
-      state = state.copyWith(todayCompletionStatus: rollbackMap);
+      state = state.copyWith(
+        status: HabitStatus.success,
+        errorMessage: e.toString(),
+      );
       rethrow;
     }
   }

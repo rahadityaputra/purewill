@@ -8,12 +8,14 @@ import 'package:purewill/features/habit/models/habit_log_model.dart';
 import 'package:purewill/features/conversation/views/conversation_list_screen.dart';
 import 'package:purewill/features/habit/providers/habit_provider.dart';
 import 'package:purewill/features/habit/widgets/habit_screen_card.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
 import 'package:purewill/features/home/views/home_screen.dart';
 import 'package:purewill/features/habit/view_models/habit_view_model.dart';
 import 'package:purewill/features/habit/views/habit_detail_screen.dart';
 import 'package:purewill/features/habit/views/add_habit_screen.dart';
 import 'package:purewill/features/habit/views/category_unit_management_screen.dart';
 import 'package:purewill/features/nofap/views/nofap_screen.dart';
+import 'package:purewill/features/pet_game/pet_screen.dart';
 
 class HabitScreen extends ConsumerStatefulWidget {
   const HabitScreen({super.key});
@@ -54,7 +56,7 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
         });
       }
     } catch (e) {
-      print('Error loading completion status: $e');
+      debugPrint('Error loading completion status: $e');
     }
   }
 
@@ -75,7 +77,7 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
       );
     } else if (index == 4) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const ConversationListScreen()),
+        MaterialPageRoute(builder: (context) => const PetScreen()),
       );
     }
   }
@@ -92,17 +94,8 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
     final List<HabitModel> userHabits = habitsState.habits;
 
     return Scaffold(
-      appBar: AppBar(
-        // backgroundColor: const Color.fromRGBO(176, 230, 216, 1),
-        shadowColor: Colors.black.withOpacity(0.2),
-        title: const Text(
-          'My Habits',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
+      appBar: ConsistentAppBar(
+        title: 'My Habits',
         actions: [
           IconButton(
             icon: const Icon(Icons.tune, color: Colors.black87),
@@ -129,42 +122,25 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
       ),
       body: Stack(
         children: [
-          // Background image
           Positioned.fill(
             child: Image.asset('assets/images/home/bg.png', fit: BoxFit.cover),
           ),
-          // Blur effect overlay
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-              child: Container(color: Colors.black.withOpacity(0.1)),
+              child: Container(color: Colors.black.withValues(alpha: 0.1)),
             ),
           ),
-          // Content
           SafeArea(
             child: RefreshIndicator(
               onRefresh: () async {
-                print('🔄 HabitScreen: Pull to refresh triggered');
                 await ref.read(habitNotifierProvider.notifier).loadUserHabits();
                 await _loadTodayCompletionStatus();
               },
               child: ListView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(10),
                 children: [
-                  // Habit Overview Card
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
+                  ConsistentSectionCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -194,7 +170,10 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
                             ),
                             _buildStatCard(
                               'Active Habits',
-                              userHabits.where((h) => h.isActiveOn(nowInIndonesia())).length.toString(),
+                              userHabits
+                                  .where((h) => h.isActiveOn(nowInIndonesia()))
+                                  .length
+                                  .toString(),
                               Icons.play_circle,
                               Colors.orange,
                             ),
@@ -206,20 +185,7 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
 
                   const SizedBox(height: 24),
 
-                  // All Habits Section
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
+                  ConsistentSectionCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -262,8 +228,6 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
                       ],
                     ),
                   ),
-
-                  // Bottom padding
                   const SizedBox(height: 100),
                 ],
               ),
@@ -289,9 +253,9 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
         padding: const EdgeInsets.all(12),
         margin: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3), width: 1),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
         ),
         child: Column(
           children: [
@@ -321,11 +285,11 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -380,11 +344,11 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -435,7 +399,7 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
   }
 
   int _getCompletedTodayCount() {
-    print(_todayCompletionStatus.values);
+    debugPrint(_todayCompletionStatus.values.toString());
     return _todayCompletionStatus.values
         .where((status) => status == LogStatus.success)
         .length;
@@ -515,11 +479,11 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -542,75 +506,4 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
       ),
     );
   }
-
-  // String _determineCategory(HabitModel habit) {
-  //   // Prioritas 1: Jika habit punya categoryId, mapping ke nama kategori
-  //   final categoryId = habit.category?.id;
-  //   if (categoryId != null) {
-  //     final categoryName = _mapCategoryIdToName(categoryId);
-  //     return categoryName;
-  //   }
-
-  //   // Prioritas 2: Gunakan habit_icon_helper untuk menentukan kategori dari nama habit
-  //   final categoryFromName = HabitIconHelper.getHabitCategory(habit.name);
-  //   return categoryFromName;
-  // }
-
-  // Mapping categoryId ke nama kategori
-  // String _mapCategoryIdToName(int categoryId) {
-  //   switch (categoryId) {
-  //     case 1:
-  //       return "Health & Fitness";
-  //     case 2:
-  //       return "Learning & Education";
-  //     case 3:
-  //       return "Productivity";
-  //     case 4:
-  //       return "Mindfulness & Mental Health";
-  //     case 5:
-  //       return "Personal Care";
-  //     case 6:
-  //       return "Social & Relationships";
-  //     case 7:
-  //       return "Finance";
-  //     case 8:
-  //       return "Hobbies & Creativity";
-  //     case 9:
-  //       return "Work & Career";
-  //     case 10:
-  //       return "Other";
-  //     default:
-  //       return "Other";
-  //   }
-  // }
-
-  // String _buildHabitSubtitle(HabitModel habit) {
-  //   if (habit.targetValue != null) {
-  //     if (habit.unit != null && habit.unit!.isNotEmpty) {
-  //       return '${habit.targetValue} ${habit.unit}';
-  //     }
-  //     return '${habit.targetValue}';
-  //   }
-  //   return 'Daily habit';
-  // }
-
-  // Color? _parseCategoryColor(String? rawColor) {
-  //   if (rawColor == null || rawColor.trim().isEmpty) {
-  //     return null;
-  //   }
-
-  //   var hex = rawColor.trim().replaceFirst('#', '');
-  //   if (hex.length == 6) {
-  //     hex = 'FF$hex';
-  //   }
-  //   if (hex.length != 8) {
-  //     return null;
-  //   }
-
-  //   final value = int.tryParse(hex, radix: 16);
-  //   if (value == null) {
-  //     return null;
-  //   }
-  //   return Color(value);
-  // }
 }

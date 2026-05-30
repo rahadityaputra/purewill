@@ -1,22 +1,29 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:purewill/features/auth/models/auth_model.dart';
+import 'package:purewill/features/auth/services/biometric_service.dart';
+import 'package:purewill/features/auth/services/memory_only_token_service.dart';
+import 'package:purewill/features/auth/services/secure_storage_repository.dart';
+import 'package:purewill/features/user/models/profile_model.dart';
+import 'package:purewill/features/user/models/user_model.dart';
 
 class AuthService {
   AuthService({http.Client? client}) : _client = client ?? http.Client() {
     final host = dotenv.env['API_HOST'] ?? 'localhost';
     final port = dotenv.env['API_PORT'] ?? '4000';
     _baseUrl = 'http://$host:$port/api';
-
-    if (kDebugMode) {
-      print('🌐 AuthService Base URL: $_baseUrl');
-    }
   }
 
   final http.Client _client;
   late final String _baseUrl;
+
+  final MemoryOnlyTokenService _memoryTokenService = MemoryOnlyTokenService();
+  final SecureStorageRepository _secureStorageRepository =
+      SecureStorageRepository();
+  final BiometricService _biometricService = BiometricService();
 
   String? _accessToken;
   String? _refreshTokenCookie;
@@ -30,6 +37,257 @@ class AuthService {
 
   void setRefreshTokenCookie(String cookie) {
     _refreshTokenCookie = cookie;
+  }
+
+  Future<void> restoreAccessToken() async {
+    final storedToken = await _memoryTokenService.getAccessToken();
+    final storedRefreshCookie = await _secureStorageRepository
+        .getRefreshTokenCookie();
+
+    _accessToken = storedToken;
+
+    if (storedToken != null) {
+      setAccessToken(storedToken);
+      debugPrint("✅ Restored access token from memory");
+    } else {
+      debugPrint("ℹ️ No access token in memory");
+    }
+
+    if (storedRefreshCookie != null) {
+      setRefreshTokenCookie(storedRefreshCookie);
+      debugPrint("✅ Restored refresh token cookie from secure storage");
+    } else {
+      debugPrint("ℹ️ No refresh token cookie in secure storage");
+    }
+  }
+
+  Future<UserModel?> restoreSession({bool requireBiometric = false}) async {
+    await restoreAccessToken();
+
+    if (_accessToken != null) {
+      try {
+        final response = await checkSession(skipRefresh: true);
+        _accessToken = accessToken;
+        if (_accessToken != null) {
+          await _memoryTokenService.saveAccessToken(_accessToken!);
+        }
+
+        final refreshCookie = refreshTokenCookie;
+        if (refreshCookie != null) {
+          await _secureStorageRepository.saveRefreshTokenCookie(refreshCookie);
+        }
+
+        return _userFromSessionResponse(response);
+      } on AuthException {
+        await _memoryTokenService.clearAccessToken();
+        _accessToken = null;
+      }
+    }
+
+    final storedRefreshCookie = await _secureStorageRepository
+        .getRefreshTokenCookie();
+    if (storedRefreshCookie == null) {
+      return null;
+    }
+
+    if (requireBiometric) {
+      final isEnabled = await _secureStorageRepository.isBiometricEnabled();
+      if (isEnabled) {
+        final result = await _biometricService.authenticate(
+          reason: 'Authenticate to restore session',
+          title: 'Unlock PureWill',
+          subtitle: 'Use your fingerprint to continue',
+          cancelButtonText: 'Use Password',
+        );
+
+        if (!result.success) {
+          await _memoryTokenService.clearSessionTokens();
+          await _secureStorageRepository.clearSessionTokens();
+          _accessToken = null;
+          return null;
+        }
+      }
+    }
+
+    try {
+      final refreshed = await refreshSession();
+      _accessToken = refreshed['accessToken'] as String?;
+      if (_accessToken != null) {
+        await _memoryTokenService.saveAccessToken(_accessToken!);
+      }
+
+      final refreshCookie = refreshTokenCookie;
+      if (refreshCookie != null) {
+        await _secureStorageRepository.saveRefreshTokenCookie(refreshCookie);
+      }
+
+      final session = await checkSession();
+      return _userFromSessionResponse(session);
+    } on AuthException {
+      await _memoryTokenService.clearSessionTokens();
+      await _secureStorageRepository.clearSessionTokens();
+      _accessToken = null;
+      rethrow;
+    }
+  }
+
+  Future<String?> refreshAccessToken() async {
+    try {
+      debugPrint("refresh token access token");
+      debugPrint(
+        "🔄 Current state - _refreshTokenCookie: ${_refreshTokenCookie != null ? 'SET' : 'NULL'}",
+      );
+      final refreshed = await refreshSession();
+      _accessToken = refreshed['accessToken'] as String?;
+
+      if (_accessToken != null) {
+        await _memoryTokenService.saveAccessToken(_accessToken!);
+      }
+
+      final refreshCookie = refreshTokenCookie;
+      if (refreshCookie != null) {
+        await _secureStorageRepository.saveRefreshTokenCookie(refreshCookie);
+      }
+
+      return _accessToken;
+    } on AuthException {
+      await _memoryTokenService.clearSessionTokens();
+      await _secureStorageRepository.clearSessionTokens();
+      _accessToken = null;
+      rethrow;
+    }
+  }
+
+  Future<UserModel?> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await createSession(email: email, password: password);
+
+      _accessToken = response['accessToken'] as String?;
+      if (_accessToken != null) {
+        await _memoryTokenService.saveAccessToken(_accessToken!);
+      }
+
+      final refreshCookie = refreshTokenCookie;
+      if (refreshCookie != null) {
+        await _secureStorageRepository.saveRefreshTokenCookie(refreshCookie);
+      }
+
+      return UserModel(
+        id: 'temp',
+        email: email,
+        profile: ProfileModel(
+          fullName: email.split('@').first,
+          avatarUrl: null,
+        ),
+      );
+    } on AuthException catch (e, stackTrace) {
+      log('AUTH FAILURE: Login failed.', error: e, stackTrace: stackTrace);
+      rethrow;
+    } catch (e, stackTrace) {
+      log(
+        'GENERAL FAILURE: Unexpected error during login.',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  Future<UserModel?> signup({
+    required String fullname,
+    required String username,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+    required String gender,
+    required DateTime birthDate,
+  }) async {
+    try {
+      final request = RegisterRequest(
+        email: email,
+        username: username,
+        fullname: fullname,
+        gender: gender.toUpperCase(),
+        birthDate: birthDate,
+        password: password,
+        passwordConfirmation: passwordConfirmation,
+      );
+
+      final response = await register(request);
+
+      if (response['data'] != null) {
+        final userData = response['data'];
+        return UserModel(
+          id: userData['id'].toString(),
+          email: userData['email'],
+          profile: ProfileModel(
+            fullName: userData['username']?.toString() ?? '',
+            avatarUrl: null,
+          ),
+        );
+      }
+
+      return null;
+    } on AuthException catch (e, stackTrace) {
+      log(
+        'AUTH FAILURE: Signup failed: ${e.message}',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    } catch (e, stackTrace) {
+      log(
+        'GENERAL FAILURE: Unexpected error during signup: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> logout() async {
+    try {
+      await deleteSession();
+      _accessToken = null;
+      await _memoryTokenService.clearSessionTokens();
+      await _secureStorageRepository.clearSessionTokens();
+    } on AuthException catch (e, stackTrace) {
+      log('AUTH FAILURE: Logout failed.', error: e, stackTrace: stackTrace);
+      rethrow;
+    } catch (e, stackTrace) {
+      log(
+        'GENERAL FAILURE: Unexpected error during logout.',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  UserModel? _userFromSessionResponse(Map<String, dynamic> response) {
+    final data = response['data'];
+    if (data is! Map<String, dynamic>) {
+      return null;
+    }
+
+    final profile = data['profile'];
+    final fullname = profile is Map<String, dynamic>
+        ? profile['fullname']?.toString()
+        : null;
+    final email = data['email']?.toString() ?? '';
+    final username = data['username']?.toString();
+
+    return UserModel(
+      id: data['id']?.toString() ?? '',
+      email: email,
+      profile: ProfileModel(
+        fullName: fullname ?? username ?? email.split('@').first,
+        avatarUrl: null,
+      ),
+    );
   }
 
   Future<Map<String, dynamic>> createSession({
@@ -46,6 +304,7 @@ class AuthService {
       final data = _decodeBody(response);
       _accessToken = data['accessToken'] as String?;
       _refreshTokenCookie = _extractRefreshTokenCookie(response);
+
       return data;
     }
 
@@ -78,8 +337,6 @@ class AuthService {
     if (response.statusCode == 201) {
       return _decodeBody(response);
     }
-
-    print(response.body);
     if (response.statusCode == 400) {
       final error = _decodeBody(response);
       throw AuthException.fromResponse(
@@ -100,6 +357,16 @@ class AuthService {
   }
 
   Future<Map<String, dynamic>> refreshSession() async {
+    if (_refreshTokenCookie == null) {
+      final storedCookie = await _secureStorageRepository
+          .getRefreshTokenCookie();
+      if (storedCookie != null) {
+        _refreshTokenCookie = storedCookie;
+      } else {
+        throw AuthException('refresh token is required');
+      }
+    }
+
     final response = await _client.post(
       Uri.parse('$_baseUrl/auth/refresh'),
       headers: {
@@ -133,6 +400,13 @@ class AuthService {
       throw AuthException.fromResponse(
         error,
         fallbackMessage: 'refresh token not valid',
+      );
+    }
+
+    if (response.statusCode == 500) {
+      throw AuthException.fromResponse(
+        error,
+        fallbackMessage: 'refresh token processing failed',
       );
     }
 
@@ -176,8 +450,6 @@ class AuthService {
     throw AuthException('Logout failed: ${response.statusCode}');
   }
 
-  Future<void> logout() => deleteSession();
-
   Future<Map<String, dynamic>> checkSession({bool skipRefresh = false}) async {
     final response = await _client.get(
       Uri.parse('$_baseUrl/auth/session'),
@@ -193,10 +465,6 @@ class AuthService {
 
     if (response.statusCode == 401) {
       if (!skipRefresh && _refreshTokenCookie != null) {
-        if (kDebugMode) {
-          print('🔄 Access token expired. Refreshing session...');
-        }
-
         await refreshSession();
         return checkSession(skipRefresh: true);
       }
@@ -209,6 +477,13 @@ class AuthService {
   }
 
   Future<Map<String, dynamic>> getCurrentSession() => checkSession();
+
+  Future<void> clearSessionTokens() async {
+    _accessToken = null;
+    _refreshTokenCookie = null;
+    await _memoryTokenService.clearSessionTokens();
+    await _secureStorageRepository.clearSessionTokens();
+  }
 
   Map<String, dynamic> _decodeBody(http.Response response) {
     if (response.body.isEmpty) {
@@ -234,7 +509,8 @@ class AuthService {
       return null;
     }
 
-    return 'refreshToken=${match.group(1)}';
+    final extractedCookie = 'refreshToken=${match.group(1)}';
+    return extractedCookie;
   }
 
   void dispose() {

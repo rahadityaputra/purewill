@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purewill/features/habit/providers/category_unit_management_provider.dart';
+import 'package:purewill/core/widgets/app_view_widgets.dart';
 
 class EditUnitScreen extends ConsumerStatefulWidget {
   final int unitId;
@@ -73,12 +74,12 @@ class _EditUnitScreenState extends ConsumerState<EditUnitScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Unit')),
+      appBar: const ConsistentAppBar(title: 'Edit Unit'),
       body: AnimatedBuilder(
         animation: vm,
         builder: (context, _) {
           return vm.isLoading && vm.unit == null
-              ? const Center(child: CircularProgressIndicator())
+              ? const AppLoadingView()
               : Padding(
                   padding: const EdgeInsets.all(16),
                   child: Form(
