@@ -190,6 +190,7 @@ class _ProfileAvatar extends StatelessWidget {
         child: CircleAvatar(
           radius: 19,
           backgroundColor: const Color(0xFFE5E7EB),
+          backgroundImage: hasImage ? NetworkImage(avatarUrl!) : null,
           onBackgroundImageError: hasImage
               ? (exception, stackTrace) => debugPrint('Error loading avatar')
               : null,

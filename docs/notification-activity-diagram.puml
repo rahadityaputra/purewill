@@ -1,0 +1,88 @@
+@startuml
+title PureWill Notification Mechanism - Activity Diagram
+
+start
+
+partition "App Startup" {
+  :WidgetsFlutterBinding.ensureInitialized();
+  :initializeIndonesiaTimezone();
+  :dotenv.load();
+  :_initializeServices();
+  :LocalNotificationService.initialize();
+  :Create channels;
+  :Request notification permissions;
+  :handleNotificationOnStartup();
+  if (App launched from notification?) then (yes)
+    :Extract payload;
+    :Forward payload to onNotificationTap;
+  else (no)
+    :Continue normal app flow;
+  endif
+  :Initialize ReminderSyncService;
+}
+
+partition "Reminder Sync Service" {
+  :Restore auth session;
+  if (Access token available?) then (yes)
+    :Set API access token;
+    :Cancel all pending notifications;
+    :Fetch user habits;
+    repeat
+      :Fetch reminder settings for each habit;
+      repeat
+        if (Reminder enabled?) then (yes)
+          :Build notification id;
+          :scheduleHabitReminder();
+          :Store payload habit_{habitId};
+        else (no)
+          :Skip reminder;
+        endif
+      repeat while (More reminders?) is (yes)
+    repeat while (More habits?) is (yes)
+  else (no)
+    :Skip reschedule;
+  endif
+}
+
+partition "Update Reminder Screen / Controller" {
+  :User edits reminder settings;
+  :Save reminder changes;
+  :Update reminder data in API/repository;
+  if (Reminder enabled?) then (yes)
+    :Cancel existing habit notifications;
+    :Check notification permissions;
+    if (Permission granted?) then (yes)
+      :Generate notification id;
+      :scheduleHabitReminder();
+    else (no)
+      :Stop without scheduling;
+    endif
+  else (no)
+    :Cancel existing habit notifications;
+  endif
+}
+
+partition "Local Notification Service" {
+  :Compute scheduled time in Indonesia timezone;
+  if (Scheduled time is before now?) then (yes)
+    :Add 1 day;
+  else (no)
+    :Use current day;
+  endif
+  :Create Android/iOS NotificationDetails;
+  if (repeatDaily?) then (yes)
+    :zonedSchedule with matchDateTimeComponents=time;
+  else (no)
+    :zonedSchedule once;
+  endif
+  :Verify pending notification exists;
+  :Wait for user tap;
+  if (Notification tapped?) then (yes)
+    :onDidReceiveNotificationResponse();
+    :Send payload to app callback;
+  endif
+}
+
+stop
+
+@enduml

@@ -8,6 +8,7 @@ import 'package:purewill/core/utils/indonesia_timezone.dart';
 import 'package:purewill/core/widgets/primary_action_button.dart';
 import 'package:purewill/features/user/providers/timezone_provider.dart';
 import 'package:purewill/features/user/views/edit_profile_screen.dart';
+import 'package:purewill/features/user/views/feedback_screen.dart';
 import 'package:purewill/core/widgets/app_view_widgets.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -388,6 +389,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     leadingIcon: const Icon(Icons.edit_outlined),
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
+                    width: double.infinity,
+                    height: 52,
+                    borderRadius: 16,
+                  ),
+                  const SizedBox(height: 12),
+                  PrimaryActionButton(
+                    onPressed: state.isLoading || user == null
+                        ? null
+                        : () async {
+                            await Navigator.of(context).push<bool>(
+                              MaterialPageRoute(
+                                builder: (_) => const FeedbackScreen(),
+                              ),
+                            );
+                          },
+                    text: 'Kesan & Pesan',
+                    leadingIcon: const Icon(Icons.feedback_outlined),
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black87,
                     width: double.infinity,
                     height: 52,
                     borderRadius: 16,
